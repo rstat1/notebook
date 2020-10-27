@@ -1,0 +1,61 @@
+<div style="display: flex;">
+	<div class="project-list-button" (click)='showMenu("projects", $event)' [class.project-list-button-selected]="showProjectListMenu == true">
+		<mat-icon style="color:#689F38;">view_module</mat-icon>
+		<span class="project-name">Projects</span>
+		<mat-icon>expand_more</mat-icon>
+	</div>
+	<div class="project-list-button" style="width: 146px;" (click)='showMenu("filter", $event)' [class.project-list-button-selected]="showSearch == true">
+		<mat-icon style="color:#689F38;">filter_list</mat-icon>
+		<span class="project-name">Filter by Tag</span>
+		<mat-icon>expand_more</mat-icon>
+	</div>
+</div>
+<div #projects class="dropdown-box" [class.dropdown-shown]="showProjectListMenu == true" [class.dropdown-hidden]="showProjectListMenu == false">
+	<div id="scrollbox" style="height:500px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
+		<div style="padding-left:10px; padding-right:10px;">
+			<mat-form-field style="width: 100%;margin-top: 15px;">
+				<input matInput placeholder="Search" [(ngModel)]="filterText" (input)="filterProjects()">
+			</mat-form-field>
+		</div>
+		<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == false">Recently modified</div>
+		<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == true">Search Results</div>
+		<div class="list-grid">
+			<div class="project-list-item" *ngFor="let p of filteredProjects" (click)="projectClicked(p)">
+				<div class="project-avatar avatar" [attr.data-name]="getInitials(p)"></div>
+				<div style="margin-top: 12px;">
+					<span>{{p}}</span>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div #search class="dropdown-box" [class.dropdown-shown]="showSearch == true" [class.dropdown-hidden]="showSearch == false">
+	<div id="scrollbox" style="height:250px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
+		<div style="margin-top:15px;margin-left:20px;margin-bottom: 10px;">Tags</div>
+		<mat-chip-list multiple style="margin-left: 10px;" class="chip-list chip-list-list-item">
+			<mat-chip [selectable]="true" [selected]="selectedTags.value.has(tag.tagId)" (click)="clicked(tag.tagId)" *ngFor="let tag of docTags" [value]="tag.tagId">
+				{{tag.tagValue}}
+			</mat-chip>
+		</mat-chip-list>
+	</div>
+</div>
+<div class="page-margin">
+	<p class="page-title">{{pageTitle}}</p>
+	<button style="padding: 0px 5px 0px 0px" mat-button (click)="newDocument()">
+		<mat-icon style="vertical-align: text-bottom;padding-top: 3px;">add</mat-icon>
+		Add Note
+	</button>
+</div>
+<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="list">
+	<div class="list-element" *ngFor="let note of notes">
+		<img style="margin-right: 4px;" src="/assets/wiki.png" width="24" height="24" />
+		<div style="flex: 2;">
+			{{note.title}}
+			<mat-chip-list class="chip-list chip-list-list-item">
+				<mat-basic-chip class="status-chip-list-item" *ngFor="let t of note.tags">
+					{{t.tagValue}}
+				</mat-basic-chip>
+			</mat-chip-list>
+		</div>
+	</div>
+</div>

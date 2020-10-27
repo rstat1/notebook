@@ -1,0 +1,74 @@
+code {
+	padding: 2px 4px;
+	color: #fff;
+	background-color: #111;
+	border-radius: 4px;
+	font-family: 'PT Mono', monospace;
+}
+.mat-form-field {
+    display: block;
+    position: relative;
+    text-align: left;
+}
+.sub-repo-title {
+    font-weight: lighter;
+    display: inline-block;
+    font-size: 13pt;
+    margin-top: 4px;
+    margin-left: 18px;
+    margin-bottom: 6px;
+}
+.sub-commit-message {
+    font-weight: bold;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    word-wrap: break-word;
+    white-space: nowrap;
+    width: 40vw;
+    font-size:11pt;
+    max-height: 18px;
+}
+.sub-commit-hash {
+    display: inline-block;
+    font-weight: bold;
+    font-size: 11pt;
+    color: #558b2f;
+    font-family: 'PT Mono', monospace
+}
+.sub-author-and-date {
+    display: inline-block;
+    color: #686868;
+    font-size: 11pt;
+}
+.extended-message-wrapper {
+    position: relative;
+    margin-top: 1em;
+    display: inline-block;
+}
+.extended-message-content {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    background-color: #1d1d1d;
+    padding-bottom: 1.5em;
+    padding-top:2px;
+    font-size:11pt;
+    font-weight: bold;
+    width: auto;
+  }
+.extended-message-content:before {
+    position: absolute;
+    z-index: -1;
+    content: '';
+    right: calc(50% - 10px);
+    top: 8px;
+}
+.extended-message-wrapper:hover .extended-message-content {
+    z-index: 10;
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0,-20px);
+}
+.token-scope {
+	margin-bottom: 10px;
+}

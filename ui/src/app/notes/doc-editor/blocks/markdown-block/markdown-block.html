@@ -1,0 +1,10 @@
+<p>{{blockID}}</p>
+<ng-template #actions>
+	<button mat-icon-button [matTooltip]="tooltipText" (click)="expand()">
+		<img src="/assets/resize.png" />
+	</button>
+	<mat-button-toggle-group style="float: right;" name="mode" appearance="legacy">
+		<mat-button-toggle checked value="edit">Edit</mat-button-toggle>
+		<mat-button-toggle value="edit">Preview</mat-button-toggle>
+	</mat-button-toggle-group>
+</ng-template>

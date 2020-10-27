@@ -1,0 +1,58 @@
+* {
+	outline: none;
+}
+.notes-page-root {
+	flex: 2;
+    /* padding: 30px 50px; */
+    background-color: #2e2e2e;
+    height: 100%;
+	/* margin: 0px 100px 0px 100px; */
+	margin:0px 69.3% 0px 0px;
+}
+.page-width {
+	width: 100%;
+}
+.project-list {
+	width: 120px;
+    height: 40px;
+    background-color: #2e2e2e;
+	padding: 11px;
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+.project-list:hover {
+	background-color: #1d1d1d;
+}
+.project-name {
+	margin: 0px 0px 0px 4px;
+}
+.page-title {
+    color: white;
+	font-size: 26pt;
+}
+.note-content {
+	margin: 40px 10vh 40px 10vh;
+}
+.content-block {
+
+}
+.content-block:empty::before {
+	content: attr(placeholder);
+    display: block;
+}
+.initial-block {
+    width: 91%;
+    background-color: #333333;
+    border: 2px #6e6e6e dashed;
+    font-style: italic;
+    color: #666;
+    height: 60%;
+    text-align: center;
+	padding: 110px;
+	cursor: pointer;
+}
+.initial-block:hover {
+	border: 2px #464646 dashed;
+	background-color: #464646;
+}

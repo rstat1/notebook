@@ -1,0 +1,30 @@
+code {
+	padding: 2px 4px;
+    color: #fff;
+    background-color: #111;
+	border-radius: 4px;
+	font-family: 'PT Mono', monospace;
+}
+.mat-form-field {
+    display: block;
+    position: relative;
+    text-align: left;
+}
+.save-button {
+	text-transform:uppercase;
+	display:block;
+	margin-top:10px;
+}
+.mat-column-Action {
+	max-width: 4vw;
+}
+.mat-progress-spinner {
+    display: block;
+	position: relative;
+	margin: 10px auto;
+}
+.settings-message {
+    padding: 5px;
+    line-height: 1.3;
+    font-style: italic;
+}

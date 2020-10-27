@@ -1,0 +1,28 @@
+<div>
+	<div *ngFor="let item of nodes"
+		[class.child-tree]="isChildTree" [class.parent-tree]="!isChildTree"
+		[class.collapsed]="!item.Expanded && !isChildTree"
+		(mousedown)="$event.preventDefault()">
+		<span [class.tree-category]="!isChildTree" [class.tree-category-block]="!isChildTree"
+			  [class.no-border]="!item.Expanded" [class.capitalized-title]="item.Expanded && !isChildTree">
+			<span *ngIf="item.Children != null && item.Expanded && allowCollapse">
+				<i style="margin-top: 6px" class="fa fa-chevron-down" (click)="this.toggleExpand(item)"></i>
+			</span>
+			<span *ngIf="item.Children != null && !item.Expanded && allowCollapse">
+				<i style="margin-top: 6px" class="fa fa-chevron-right" (click)="this.toggleExpand(item)"></i>
+			</span>
+			<span class="category" *ngIf="isChildTree || item.Children == null"
+				  (click)="childDoubleClicked(item, $event)">
+				<treeview-item [HostedItem]="item.ItemTemplate"></treeview-item>
+			</span>
+			<span class="category" *ngIf="!isChildTree && item.Children != null"
+				  (click)="this.toggleExpand(item)">
+				<treeview-item [HostedItem]="item.ItemTemplate"></treeview-item>
+			</span>
+		</span>
+		<span [class.item-visible]="item.Expanded || !allowCollapse"
+			  [class.item-hidden]="!item.Expanded && allowCollapse" style="display:block;">
+			<treeview [nodes]="item.Children" [isChildTree]="true"></treeview>
+		</span>
+	</div>
+</div>

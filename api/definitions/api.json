@@ -1,0 +1,10 @@
+{
+	"APIDefinitions": [
+		{
+			"GeneratedFilename": "docs.go",
+			"GeneratedTypeName": "DocsManager",
+			"DefinitionFile": "docs.json",
+			"DependsOn": []
+		}
+	]
+}

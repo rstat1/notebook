@@ -1,0 +1,61 @@
+<div style="display:flex;flex-wrap:wrap;">
+	<div style="flex: 0 0 33.3333333333%;">
+		<h2 style="margin-bottom:15px;">Edit a project</h2>
+		<p class="admin-description-text">
+			On this page you can change a project's name, move it to a different group, or enable any previously disabled features (such as CI support, the Wiki, etc).
+		</p>
+		<mat-nav-list *ngIf="projects != null && projects.length > 0" malihu-scrollbar
+				class="list-height" [scrollbarOptions]="scrollbarOptions">
+			<mat-list-item (click)="projectListClick(p.projectName, p.group)" style="height:30px;font-size:11pt;"
+							*ngFor="let p of projects">
+				<mat-icon style="color:#558b2f" mat-list-icon>insert_drive_file</mat-icon>
+				{{p.projectName}}
+			</mat-list-item>
+		</mat-nav-list>
+	</div>
+	<div style="flex: 0 0 66.6666666667%;min-height:50vh;max-height:69vh;">
+		<h4 style="margin-bottom:10px;">Project name and group</h4>
+		<mat-form-field class="login-register-text-box" style="min-width: 35.8vw;">
+			<input required matInput placeholder="Project Name" [(ngModel)]="project">
+		</mat-form-field>
+		<mat-form-field class="login-register-text-box" style="min-width:35.8vw;">
+			<mat-select placeholder="Project group" name="groupname" [(ngModel)]="projectGroup" required>
+				<mat-option *ngFor="let g of this.groupList" [value]="g.name">
+					{{g.name}}
+				</mat-option>
+				<mat-option [value]="'new'">
+					New Group
+				</mat-option>
+			</mat-select>
+		</mat-form-field>
+		<mat-form-field class="login-register-text-box" style="min-width: 35.8vw;" *ngIf="projectGroup == 'new'">
+			<input required matInput placeholder="New Group Name" [(ngModel)]="newGroupName">
+		</mat-form-field>
+		<span *ngIf="!isProd">
+			<h4 style="margin-bottom:15px;margin-top:15px;">Project Settings</h4>
+			<div class="token-scope">
+				<mat-checkbox color="primary" required style="display:block">
+					<b style="font-size: 12pt;">Enable Notes</b>
+				</mat-checkbox>
+				<p style="margin-left:28px">Use notes to store special project specific documetation (like that weird and obscure build command you always forget), or snippets of other related info.</p>
+			</div>
+			<div class="token-scope">
+				<mat-checkbox color="primary" required style="display:block">
+					<b style="font-size: 12pt;">CI support</b>
+				</mat-checkbox>
+				<p style="margin-left:28px">Devcentral has built-in support for triggering builds of your projects. Enable here and configure on the <code>Builds</code> page.</p>
+			</div>
+			<div class="token-scope">
+				<mat-checkbox color="primary" required style="display:block">
+					<b style="font-size: 12pt;">File History</b>
+				</mat-checkbox>
+				<!-- TODO: Rethink the wording of this at some point. -->
+				<p style="margin-left:28px">This feature when combined with Workspaces saves incremental changes to each file in this project beyond what actually gets commited to Git.</p>
+			</div>
+		</span>
+		<div style="margin-top:25px;">
+			<button [disabled]="disableSaveButton()" class="save-button" mat-raised-button color="primary"
+					type="button" (click)="save()">Save</button>
+		</div>
+	</div>
+</div>

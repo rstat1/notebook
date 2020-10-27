@@ -1,0 +1,28 @@
+<span *ngIf="this.navType == 'quick'">
+	<div class="logo" (click)="doSomethingWithClick('home')" >
+		<a (click)="doSomethingWithClick('home')" matTooltipPosition="right" matTooltip="Home">
+			<img src="/assets/module.png"/>
+		</a>
+	</div>
+	<div class="quick-nav-icons">
+		<div *ngFor="let item of getCategoryItems('App')">
+			<img class="quick-nav-icon" src="/assets/{{item.Icon}}.png" (click)="doSomethingWithClick(item.ActionName)"
+				width="32" height="32" matTooltipPosition="right" matTooltip="{{item.ItemTitle}}"/>
+		</div>
+	</div>
+</span>
+<span *ngIf="this.navType == 'full'">
+	<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="menu-block">
+		<div class="menu-category-block" *ngFor="let c of categories">
+			<div *ngIf="this.menu.GetCategoryItems(c, this.menuType).length > 0" class="menu-category">{{c}}</div>
+			<div class="menu-item" *ngFor="let item of this.menu.GetCategoryItems(c, this.menuType)"
+					(click)="doSomethingWithClick(item.ActionName)">
+				<img src="/assets/{{item.Icon}}.png" width="32" height="32" class="menu-item-icon" />
+				<span class="menu-item-details">
+					<span class="menu-item-title">{{item.ItemTitle}}</span>
+					<span class="menu-item-description">{{item.ItemSubtext}}</span>
+				</span>
+			</div>
+		</div>
+	</div>
+</span>

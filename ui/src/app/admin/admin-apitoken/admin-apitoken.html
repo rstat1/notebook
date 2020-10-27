@@ -1,0 +1,78 @@
+<div style="display:flex;flex-wrap:wrap;">
+	<div style="flex: 0 0 33.3333333333%;">
+		<h2 style="margin-bottom:15px;">API Tokens</h2>
+		<p class="admin-description-text">
+			Tokens created here, may be used to access the DevCentral API with the same privileges as the creator.
+			You'll need one of these if you want to use the <code>dc</code> CLI app.
+		</p>
+	</div>
+	<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="content-height" style="flex: 0 0 66.6666666667%;min-height:50vh;">
+		<h4 style="margin-bottom:10px;">Add a new API Token</h4>
+		<mat-form-field  class="login-register-text-box" style="min-width: 400px;">
+			<input [(ngModel)]="this.description" matInput placeholder="Token Description" name="appname" required >
+		</mat-form-field>
+		<h4 style="margin-bottom:10px;">Scopes</h4>
+		<div class="token-scope">
+			<mat-checkbox (change)="scopeChanged('api')" color="primary" required style="display:block">
+				<b style="font-family: 'PT Mono', monospace;">api</b>
+			</mat-checkbox>
+			<p style="margin-left:28px">Grants standard non-administrative access to the API, including all groups and projects.</p>
+		</div>
+		<div class="token-scope" *ngIf="this.auth.UserIsRoot">
+			<mat-checkbox (change)="scopeChanged('admin_api')" color="primary" required style="display:block">
+				<b style="font-family: 'PT Mono', monospace;">admin_api</b>
+			</mat-checkbox>
+			<p style="margin-left:28px">Grants access to administrative portions of the API. Please note this scope does not include standard API access.</p>
+		</div>
+		<div class="token-scope">
+			<mat-checkbox (change)="scopeChanged('read_repo')" color="primary" required style="display:block">
+				<b style="font-family: 'PT Mono', monospace;">read_repo</b>
+			</mat-checkbox>
+			<p style="margin-left:28px">Grants clone access to repos you have access to.</p>
+		</div>
+		<div class="token-scope">
+			<mat-checkbox (change)="scopeChanged('write_repo')" color="primary" required style="display:block">
+				<b style="font-family: 'PT Mono', monospace;">write_repo</b>
+			</mat-checkbox>
+			<p style="margin-left:28px">Grants commit access to repos you have access to.</p>
+		</div>
+		<button [disabled]="description == ''" type="submit" class="save-button" color="primary" mat-raised-button
+				(click)="save()">
+			Save
+		</button>
+		<h4 style="margin-top:21px;margin-bottom:10px;">Active API tokens</h4>
+		<mat-table class="mat-elevation-z8" *ngIf="hasActiveTokens" [dataSource]="dataSource">
+			<ng-container matColumnDef="Name">
+				<mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+				<mat-cell *matCellDef="let element">
+					{{element.name}}
+				</mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Created">
+				<mat-header-cell *matHeaderCellDef>Created On</mat-header-cell>
+				<mat-cell *matCellDef="let element">
+					{{element.createdAt}}
+				</mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Scopes">
+				<mat-header-cell *matHeaderCellDef>Scopes</mat-header-cell>
+				<mat-cell *matCellDef="let element">
+					{{element.scopes}}
+				</mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Action">
+				<mat-header-cell *matHeaderCellDef></mat-header-cell>
+				<mat-cell *matCellDef="let element">
+					<button (click)="deleteToken(element.name)" color="warn" id="versionMenu" mat-button>
+						Delete
+					</button>
+				</mat-cell>
+			</ng-container>
+			<mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+			<mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+		</mat-table>
+		<div *ngIf="!hasActiveTokens" class="settings-message">
+			<p style="text-align:center;">User has no active API tokens</p>
+		</div>
+	</div>
+</div>

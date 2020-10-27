@@ -1,0 +1,8 @@
+<h2 mat-dialog-title>
+	{{dialogTitle}}
+</h2>
+<div style="max-height: 500px;" id="logContent" mat-dialog-content>
+	<pre style="background-color: black;margin-top:10px;">
+<span *ngFor="let e of logEntries">{{e}}<br/></span>
+	</pre>
+</div>

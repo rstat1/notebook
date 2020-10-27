@@ -1,0 +1,31 @@
+.container {
+	width: 348px;
+	z-index: 10000;
+	margin-top:23px;
+    overflow: hidden;
+	max-height: 410px;
+	padding-bottom: 6px;
+	background-color: #1d1d1d;
+	box-shadow: black 0px 5px 8px;
+}
+.filter-box {
+	margin: 6px;
+	height: 25px;
+	padding: 4px;
+	width: 505px;
+    color: rgb(204, 204, 204);
+	background-color: rgb(60, 60, 60);
+	border: 1px solid rgb(100, 100, 100);
+}
+*:focus {
+    outline: none;
+	-webkit-focus-ring-color: auto 0px;
+}
+.empty {
+    display: block;
+    margin-top: 10px;
+    text-align: center;
+    font-style: oblique;
+    margin-bottom: 10px;
+    color: rgb(90,90,90);
+}

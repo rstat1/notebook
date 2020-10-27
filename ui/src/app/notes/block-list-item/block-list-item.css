@@ -1,0 +1,23 @@
+.list-element {
+	margin: 0px auto;
+	color: white;
+	padding: 14px 20px 14px 0px;
+	display: flex;
+	align-items: center;
+}
+.list-element:hover {
+    background-color: #2e2e2e;
+    cursor: pointer;
+}
+.item-description {
+	color: #777;
+}
+.icon-style {
+	width: 100%;
+	height: 100%;
+	flex: 0;
+	color: #558B2F;
+	font-size: 27pt;
+	margin-right: 6px;
+	margin-left: 10px;
+}

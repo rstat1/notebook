@@ -1,0 +1,124 @@
+* {
+	outline: none;
+}
+.placeholder-text {
+	margin-top: 4px;
+	font-style: italic;
+	color:#7d7d7d;
+}
+.placeholder-text-visible {
+	display: block;
+}
+.placeholder-text-invisible {
+	display: none;
+}
+.chip-list {
+    /* color:white; */
+    display:block;
+    margin-top:2px;
+    margin-left:8px;
+    border-top: 1px solid #454545;
+}
+.chip-list-list-item {
+    border: 0;
+}
+.status-chip-list-item {
+    border: 0;
+    padding: 6px;
+    background-color: #1d1d1d;
+    font-size: 9pt;
+    margin-right: 5px;
+}
+.notes-page-root {
+	flex: 2;
+    height: 100%;
+    background-color: #2e2e2e;
+	margin:0px 69.3% 0px 0px;
+}
+.page-width {
+	width: 100%;
+}
+.project-list {
+	width: 120px;
+    height: 40px;
+    background-color: #2e2e2e;
+	padding: 11px;
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+}
+.project-list:hover {
+	background-color: #1d1d1d;
+}
+.project-name {
+	margin: 0px 0px 0px 4px;
+}
+.page-title {
+    color: white;
+	font-size: 26pt;
+}
+.note-content {
+    overflow: hidden;
+	max-height: 700px;
+    min-height: 700px;
+	margin: 3vh;
+}
+.initial-block2 {
+	background-color: #424242;
+    color: darkgray;
+    padding: 20px;
+    cursor: pointer;
+}
+.initial-block2:hover {
+    background-color: #2e2e2e;
+}
+.initial-block {
+	color: darkgray;
+	width: 100%;
+	height: 100%;
+	border:2px dashed #666;
+	text-align: center;
+	padding-top: 140px;
+	cursor: pointer;
+	font-size: 13pt;
+	font-style: italic;
+}
+.initial-block:hover {
+    background-color: #2e2e2e;
+}
+[contenteditable]:empty:before {
+	content: attr(placeholder);
+	display: block;
+	color: #707070;
+}
+.document-metadata {
+	display: grid;
+}
+.cdk-drag-preview {
+	box-sizing: border-box;
+	border-radius: 4px;
+	box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+				0 8px 10px 1px rgba(0, 0, 0, 0.14),
+				0 3px 14px 2px rgba(0, 0, 0, 0.12);
+  }
+.editor-block {
+	width: 100%;height: 100%;
+}
+.cdk-drag-placeholder {
+	opacity: 0;
+}
+.cdk-drag-animating {
+	transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+.editor-block:last-child {
+	border: none;
+}
+.editor-blocks.cdk-drop-list-dragging .editor-block:not(.cdk-drag-placeholder) {
+	transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+.drag-placeholder {
+	background: #ccc;
+	border: dotted 3px #999;
+	min-height: 60px;
+	transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

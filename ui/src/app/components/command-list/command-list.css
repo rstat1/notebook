@@ -1,0 +1,33 @@
+.container {
+	z-index: 10000;
+	position: absolute;
+	width: 600px;
+	padding-bottom: 6px;
+	left: 50%;
+	margin-left: -300px;
+	background-color: #1d1d1d;
+	box-shadow: black 0px 5px 8px;
+	max-height: 410px;
+    overflow: hidden;
+}
+.filter-box {
+	width: 588px;
+	margin: 6px;
+	height: 25px;
+	padding: 4px;
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(60, 60, 60);
+    color: rgb(204, 204, 204);
+}
+*:focus {
+	-webkit-focus-ring-color: auto 0px;
+    outline: none;
+}
+.empty {
+    text-align: center;
+    font-style: oblique;
+    display: block;
+    margin-top: 10px;
+    color: rgb(90,90,90);
+    margin-bottom: 10px;
+}

@@ -1,0 +1,83 @@
+@import '~@angular/material/theming';
+
+$devapp-green: (
+	50: #558B2F,
+	100: #558B2F,
+	200: #558B2F,
+	300: #558B2F,
+	400: #558B2F,
+	500: #558B2F,
+	600: #558B2F,
+	700: #558B2F,
+	800: #558B2F,
+	900: #558B2F,
+	A100: #558B2F,
+	A200: #558B2F,
+	A400: #558B2F,
+	A700: #558B2F,
+	contrast: (
+	  50: #558B2F,
+	  100: $white-87-opacity,
+	  200: $black-87-opacity,
+	  300: $black-87-opacity,
+	  400: $black-87-opacity,
+	  500: white,
+	  600: white,
+	  700: $white-87-opacity,
+	  800: $white-87-opacity,
+	  900: $white-87-opacity,
+	  A100: $black-87-opacity,
+	  A200: white,
+	  A400: white,
+	  A700: white,
+	)
+);
+
+$devapp-grey: (
+	50: #1d1d1d,
+	100: #1d1d1d,
+	200: #1d1d1d,
+	300: #1d1d1d,
+	400: #1d1d1d,
+	500: #1d1d1d,
+	600: #1d1d1d,
+	700: #1d1d1d,
+	800: #1d1d1d,
+	900: #1d1d1d,
+	A100: #1d1d1d,
+	A200: #1d1d1d,
+	A400: #1d1d1d,
+	A700: #1d1d1d,
+	contrast: (
+	  50: #1d1d1d,
+	  100: $white-87-opacity,
+	  200: $black-87-opacity,
+	  300: $black-87-opacity,
+	  400: $black-87-opacity,
+	  500: white,
+	  600: white,
+	  700: $white-87-opacity,
+	  800: $white-87-opacity,
+	  900: $white-87-opacity,
+	  A100: $black-87-opacity,
+	  A200: white,
+	  A400: white,
+	  A700: white,
+	)
+);
+
+// Define the dark theme.
+$primary: mat-palette($devapp-green, 800, 800, 800);
+$accent:  mat-palette($devapp-grey, 800, 800, 800);
+$warn: mat-palette($mat-red);
+
+$theme: mat-dark-theme($primary, $accent, $warn);
+@include angular-material-theme($theme);
+
+$primary: 			mat-palette($mat-light-green, 700, 700, 700);
+$accent:			mat-palette($mat-grey, 50, 50, 50);
+$register-theme: 	mat-dark-theme($primary, $accent);
+
+.registration-page {
+	@include angular-material-theme($register-theme)
+}

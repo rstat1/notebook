@@ -1,0 +1,8 @@
+<ng-container [ngSwitch]="listElementType">
+	<ng-container *ngSwitchCase="'component'">
+		<ng-container *ngComponentOutlet="config.listElement"></ng-container>
+	</ng-container>
+	<ng-container *ngSwitchCase="'template'">
+		<ng-container *ngTemplateOutlet="config.listElement"></ng-container>
+	</ng-container>
+</ng-container>

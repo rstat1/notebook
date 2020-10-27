@@ -1,0 +1,67 @@
+<div style="display:flex;flex-wrap:wrap;">
+	<div style="flex: 0 0 33.3333333333%;">
+		<h2 style="margin-bottom:15px;">Create a project</h2>
+		<p class="admin-description-text">
+			Creating a project provides you with an empty git repo for your files, a todolist ready to help plan work, and a place for keeping any special documetation (like that weird and obscure build command that you always forget).
+		</p>
+	</div>
+	<div style="flex: 0 0 66.6666666667%;min-height:50vh;max-height:69vh;">
+		<h4 style="margin-bottom:10px;">Project name and group</h4>
+		<form [formGroup]="projectNameGroup">
+			<mat-form-field class="login-register-text-box" style="min-width: 35.8vw;">
+				<input required matInput placeholder="Project Name" formControlName="projectName">
+			</mat-form-field>
+		</form>
+		<form [formGroup]="groupNameGroup">
+			<mat-form-field class="login-register-text-box" style="min-width:35.8vw;">
+				<mat-select placeholder="Project group" name="groupname" formControlName="groupName" required>
+					<mat-option *ngFor="let g of this.groupList" [value]="g.name">
+						{{g.name}}
+					</mat-option>
+				</mat-select>
+			</mat-form-field>
+		</form>
+		<span *ngIf="!isProd">
+			<h4 style="margin-bottom:15px;margin-top:15px;">Project Settings</h4>
+			<form [formGroup]="projectSettings">
+				<div style="margin-bottom:20px;">
+					<!-- <mat-checkbox name="allowBuildConfig" required>
+						Allow CI builds to be configured/run for this project
+					</mat-checkbox> -->
+					<div class="token-scope">
+						<mat-checkbox color="primary" required style="display:block">
+							<b style="font-size: 12pt;">Enable Wiki</b>
+						</mat-checkbox>
+						<p style="margin-left:28px">Use the wiki to store special project specific documetation (like that weird and obscure build command you always forget).</p>
+					</div>
+					<div class="token-scope">
+						<mat-checkbox color="primary" required style="display:block">
+							<b style="font-size: 12pt;">Snippets</b>
+						</mat-checkbox>
+						<p style="margin-left:28px">Use this to store snippets of code that you aren't using but don't want to get rid of yet.</p>
+					</div>
+					<div class="token-scope">
+						<mat-checkbox color="primary" required style="display:block">
+							<b style="font-size: 12pt;">CI support</b>
+						</mat-checkbox>
+						<p style="margin-left:28px">Devcentral has built-in support for triggering builds of your projects. Enable here and configure on the <code>Builds</code> page.</p>
+					</div>
+					<div class="token-scope">
+						<mat-checkbox color="primary" required style="display:block">
+							<b style="font-size: 12pt;">File History</b>
+						</mat-checkbox>
+						<!-- TODO: Rethink the wording of this at some point. -->
+						<p style="margin-left:28px">This feature when combined with Workspaces saves incremental changes to each file in this project beyond what actually gets commited to Git.</p>
+					</div>
+				</div>
+			</form>
+		</span>
+		<!-- <div>
+			<button mat-raised-button color="primary" type="button" (click)="save()">Save</button>
+		</div> -->
+		<div style="margin-top:25px;">
+			<button [disabled]="disableSaveButton()" class="save-button" mat-raised-button color="primary"
+					type="button" (click)="save()">Save</button>
+		</div>
+	</div>
+</div>

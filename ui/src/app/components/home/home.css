@@ -1,0 +1,101 @@
+::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    color: #5b5b5b;
+    font-style: italic;
+}
+::-moz-placeholder { /* Firefox 19+ */
+    color: #5b5b5b;
+}
+:-ms-input-placeholder { /* IE 10+ */
+    color: #5b5b5b;
+}
+:-moz-placeholder { /* Firefox 18- */
+    color: #5b5b5b;
+}
+input[type=text]:focus {
+    outline: none;
+}
+#background-color {
+	background-color: #2e2e2e;
+	width:100%;
+}
+#button-style {
+	text-transform: uppercase;
+	font-weight:700;
+    width:40px;
+    height: 39px;
+    float: right;
+}
+.register-link {
+	cursor: pointer;
+	text-align:center;
+	margin-left:15px;
+	display: inline-block;
+}
+.register-link a {
+	color:#95989a;
+	font-size:12pt;
+	font-weight:300;
+	text-decoration-line: none
+}
+.login-block {
+    display: flex;
+    flex-direction: column;
+    height:440px;
+    text-align: center;
+    padding: 0px 150px 0px 150px;
+}
+.block-container {
+	display: flex;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+}
+.app-name {
+    color: #98959a;
+    margin: 30px auto;
+    font-size:16pt
+}
+.app-description {
+	color: #98959A;
+	font-size: 18pt;
+	margin-top:3pt;
+}
+.app-img {}
+.search-cmd-box {
+    background-color:#1d1d1d;
+    width:100%;
+    height:40px;
+    margin-top:30px;
+    display: flex;
+}
+.search-box {
+    flex: 1 1 auto;
+    height: 39px;
+    width: 90%;
+    background-color: #1d1d1d;
+    border:none;
+    font-family: 'Roboto';
+    color: #98959A;
+    justify-self: left;
+    margin: 0px 12px 0px 12px;
+}
+.nav-links {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: flex-end;
+    margin: 35px auto;
+}
+.nav-links img {
+    height: 48px;
+    width: 48px;
+}
+.nav-link {
+    color: #95989A;
+    text-decoration: none;
+}
+.wiki-icon {
+    width: 48px;
+    height: 48px;
+    fill: #558b2f;
+}

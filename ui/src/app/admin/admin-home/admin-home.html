@@ -1,0 +1,94 @@
+<span class="top-stat-card-container">
+	<mat-card class="stat-card">
+		<mat-card-header>
+			<mat-card-title>Projects</mat-card-title>
+		</mat-card-header>
+		<mat-card-content>
+			<p class="stat">{{projects}}</p>
+		</mat-card-content>
+	</mat-card>
+	<mat-card class="stat-card">
+		<mat-card-header>
+			<mat-card-title>Groups</mat-card-title>
+		</mat-card-header>
+		<mat-card-content>
+			<p class="stat">{{groups}}</p>
+		</mat-card-content>
+	</mat-card>
+	<mat-card class="stat-card">
+		<mat-card-header>
+			<mat-card-title>Last Backup</mat-card-title>
+		</mat-card-header>
+		<mat-card-content>
+			<p (click)="showLog()" *ngIf="this.backupDate != ''" class="stat backup-success" matTooltip="Show Log">
+				Success
+			</p>
+			<p (click)="showLog()" *ngIf="this.backupDate == ''" class="stat backup-failed" matTooltip="Show Log">
+				Failed
+			</p>
+			<p *ngIf="this.backupDate != ''" style="text-align: center;color:#999;">
+				<!-- On 10/3/2018 at 1:14 AM -->
+				{{backupDate}}
+			</p>
+		</mat-card-content>
+	</mat-card>
+</span>
+<span class="other-stats-block">
+	<mat-card style="width: 400px;">
+		<mat-card-header>
+			<mat-card-title>Other Stats</mat-card-title>
+		</mat-card-header>
+		<mat-card-content>
+			<div class="other-stats-item">
+				<div style="flex-grow:1;">
+					<div class="extended-message-wrapper">
+						<p class="sub-commit-message">Tasks</p>
+					</div>
+				</div>
+				<div>
+					<p class="sub-commit-hash">{{tasks}}</p>
+				</div>
+			</div>
+			<!-- <div class="other-stats-item">
+				<div style="flex-grow:1;">
+					<div class="extended-message-wrapper">
+						<p class="sub-commit-message">Notes</p>
+					</div>
+				</div>
+				<div>
+					<p class="sub-commit-hash">{{notes}}</p>
+				</div>
+			</div> -->
+			<div class="other-stats-item">
+				<div style="flex-grow:1;">
+					<div class="extended-message-wrapper">
+						<p class="sub-commit-message">Commits</p>
+					</div>
+				</div>
+				<div>
+					<p class="sub-commit-hash">{{commits}}</p>
+				</div>
+			</div>
+			<div class="other-stats-item">
+				<div style="flex-grow:1;">
+					<div class="extended-message-wrapper">
+						<p class="sub-commit-message">Sub Tasks</p>
+					</div>
+				</div>
+				<div>
+					<p class="sub-commit-hash">{{subtasks}}</p>
+				</div>
+			</div>
+			<div class="other-stats-item">
+				<div style="flex-grow:1;">
+					<div class="extended-message-wrapper">
+						<p class="sub-commit-message">Disk space used</p>
+					</div>
+				</div>
+				<div>
+					<p class="sub-commit-hash">{{diskSpace}}MB</p>
+				</div>
+			</div>
+		</mat-card-content>
+	</mat-card>
+</span>
