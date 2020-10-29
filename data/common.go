@@ -21,59 +21,71 @@ type AccessLevel struct {
 	Scopes   []string
 }
 
-//Collection ...
-type Collection struct {
-	Name string `storm:"id" json:"name"`
+//DeleteAPIKeyRequest ...
+type DeleteAPIKeyRequest struct {
+	ID      string `json:"id"`
+	Creator string `json:"creator"`
 }
 
-//Collections ...
-type Collections struct {
-	Collections []Collection `json:"collections"`
+//NewPageRequest ...
+type NewPageRequest struct {
+	Metadata        Page   `json:"page"`
+	NotebookID      string `json:"notebookID"`
+	ContentAsBase64 string `json:"content"`
 }
 
-//UserAPIToken ...
-type UserAPIToken struct {
-	ID        int    `storm:"id,increment"`
-	Name      string `json:"name"`
-	Scopes    string `json:"scopes"`
-	Creator   string `json:"creator"`
-	CreatedAt string `json:"createdAt"`
-	TokenHash string `json:"tokenHash"`
+//UserAPIKey ...
+type UserAPIKey struct {
+	ID          string `json:"id"`
+	Hash        string `json:"hash"`
+	Scopes      string `json:"scopes"`
+	Creator     string `json:"creator"`
+	CreatedAt   string `json:"createdAt"`
+	Description string `json:"description"`
 }
 
-//NewAPITokenResponse ...
-type NewAPITokenResponse struct {
-	Token string `json:"token"`
+//NewAPIKeyResponse ...
+type NewAPIKeyResponse struct {
+	Key string `json:"key"`
 }
 
-//DeleteTokenResponse ...
-type DeleteTokenResponse struct {
-	Tokens []UserAPIToken `json:"tokens"`
+//DeleteAPIKeyResponse ...
+type DeleteAPIKeyResponse struct {
+	Tokens []UserAPIKey `json:"keys"`
 }
 
-//Document ...
-type Document struct {
-	ID        int           `json:"id"`
-	Tags      []DocumentTag `json:"tags"`
-	Title     string        `json:"title"`
-	Layout    string        `json:"layout"`
-	Timestamp int64         `json:"timestamp"`
+//Notebook ...
+type Notebook struct {
+	ID    string          `json:"id"`
+	Name  string          `json:"name"`
+	Owner string          `json:"owner"`
+	Pages []PageReference `json:"pages"`
 }
 
-//DocumentReference ...
-type DocumentReference struct {
-	ID    int           `json:"id"`
-	Title string        `json:"title"`
-	Tags  []DocumentTag `json:"tags"`
+//Notebooks ...
+type Notebooks struct {
+	Notebooks []Notebook `json:"notebooks"`
 }
 
-//DocumentTag ...
-type DocumentTag struct {
-	TagID    int    `json:"tagId"`
+//Page ...
+type Page struct {
+	ID         string   `json:"id"`
+	Tags       []string `json:"tags"`
+	Title      string   `json:"title"`
+	Creator    string   `json:"creator"`
+	Filename   string   `json:"filename"`	
+	LastEdited int64    `json:"last_edited"`
+}
+
+//PageReference ...
+type PageReference struct {
+	ID    string    `json:"id"`
+	Title string    `json:"title"`
+	Tags  []PageTag `json:"tags"`
+}
+
+//PageTag ...
+type PageTag struct {
+	TagID    string `json:"tagId"`
 	TagValue string `json:"tagValue"`
-}
-
-//DocTagsColumn ...
-type DocTagsColumn struct {
-	TagIDs []int `json:"tags"`
 }

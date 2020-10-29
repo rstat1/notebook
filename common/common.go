@@ -76,21 +76,41 @@ func WriteAPIResponseStruct(writer http.ResponseWriter, resp APIResponse) {
 	writer.Write([]byte(apiResp))
 }
 
+//CreateAPIRespFromObject ...
+func CreateAPIRespFromObject(response interface{}, err error, failureCode int) APIResponse {
+	rAsJSON, _ := json.Marshal(response)
+	return CreateAPIResponse(string(rAsJSON), err, failureCode)
+}
+
 //WriteFailureResponse ..
 func WriteFailureResponse(err error, resp http.ResponseWriter, functionName string, status int) {
-	Logger.WithField("func", functionName).Errorln(err)
+	LogError("", err)
 	WriteAPIResponseStruct(resp, CreateAPIResponse("failed", err, status))
+}
+
+//WriteResponse ...
+func WriteResponse(respWriter http.ResponseWriter, failureCode int, resp interface{}, err error) {
+	if err != nil {
+		LogError("", err)
+		WriteAPIResponseStruct(respWriter, CreateAPIResponse("failed", err, failureCode))
+	} else {
+		if resp == nil {
+			WriteAPIResponseStruct(respWriter, CreateAPIResponse("success", nil, 200))
+		} else {
+			WriteAPIResponseStruct(respWriter, CreateAPIRespFromObject(resp, nil, 200))
+		}
+	}
 }
 
 //CreateFailureResponse ...
 func CreateFailureResponse(err error, functionName string, status int) APIResponse {
-	Logger.WithField("func", functionName).Errorln(err)
+	LogError("", err)
 	return CreateAPIResponse("failed", err, status)
 }
 
 //CreateFailureResponseWithFields ...
 func CreateFailureResponseWithFields(err error, status int, fields logrus.Fields) APIResponse {
-	Logger.WithFields(fields).Errorln(err)
+	LogError("", err)
 	return CreateAPIResponse("failed", err, status)
 }
 

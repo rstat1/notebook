@@ -14,11 +14,11 @@ import (
 const (
 	tokenRenewTime       = 1440
 	tokenRenewTimeStr    = "60s"
-	vaultKVPath          = "/secret/dc/"
+	vaultKVPath          = "/secret/notebook/"
 	vaultDecryptEndpoint = "/transit/decrypt/"
 	vaultEncryptEndpoint = "/transit/encrypt/"
 	vaultDataKeyEndpoint = "/transit/datakey/plaintext/"
-	vaultDBCredsEndpoint = "/database/creds/dc-service"
+	vaultDBCredsEndpoint = "/database/creds/notebook-service"
 )
 
 //VaultKMS ...
