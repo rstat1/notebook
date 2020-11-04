@@ -34,6 +34,13 @@ type NewPageRequest struct {
 	ContentAsBase64 string `json:"content"`
 }
 
+//NewAPIKeyRequest ...
+type NewAPIKeyRequest struct {
+	Creator     string `json:"-"`
+	Scopes      string `json:"scopes"`
+	Description string `json:"description"`
+}
+
 //UserAPIKey ...
 type UserAPIKey struct {
 	ID          string `json:"id"`
@@ -78,9 +85,9 @@ type Page struct {
 
 //PageReference ...
 type PageReference struct {
-	ID    string    `json:"id"`
-	Title string    `json:"title"`
-	Tags  []PageTag `json:"tags"`
+	ID    string   `json:"id"`
+	Title string   `json:"title"`
+	Tags  []string `json:"tags"`
 }
 
 //NotebookReference ...

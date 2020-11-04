@@ -55,7 +55,8 @@ func (data *DataStore) ConnectToMongoDB() error {
 func (data *DataStore) NewPage(page Page, notebookID string) error {
 	if inserted, err := data.insertUniqueItem("pages", page, bson.M{"title": page.Title}); err == nil {
 		if inserted {
-			r, err := data.db.Collection("notebooks", nil).UpdateOne(context.Background(), bson.M{"id": notebookID}, bson.M{"$push": bson.M{"pages": page.ID}}, &options.UpdateOptions{})
+			pageRef := PageReference{ID: page.ID, Tags: page.Tags, Title: page.Title}
+			r, err := data.db.Collection("notebooks", nil).UpdateOne(context.Background(), bson.M{"id": notebookID}, bson.M{"$push": bson.M{"pages": pageRef}}, &options.UpdateOptions{})
 			if r.ModifiedCount == 0 && err == nil {
 				return errors.New("not modified")
 			} else if r.MatchedCount == 0 && err == nil {
@@ -90,14 +91,15 @@ func (data *DataStore) NewTag(tag PageTag) error {
 func (data *DataStore) NewNotebook(notebook Notebook) error {
 	inserted, err := data.insertUniqueItem("notebooks", notebook, bson.M{"name": notebook.Name})
 	if !inserted {
-		return errors.New("this tag already exists")
+		return errors.New("this notebook already exists")
 	}
 	return err
 }
 
 //NewAPIKey ...
-func (data *DataStore) NewAPIKey(apiKey UserAPIKey) (key NewAPIKeyResponse, err error) {
+func (data *DataStore) NewAPIKey(keyRequest NewAPIKeyRequest) (key NewAPIKeyResponse, err error) {
 	var b [20]byte
+	var apiKey UserAPIKey
 
 	newT := time.Now().Format("Jan 2, 2006")
 	if _, err := rand.Read(b[:]); err != nil {
@@ -106,8 +108,11 @@ func (data *DataStore) NewAPIKey(apiKey UserAPIKey) (key NewAPIKeyResponse, err 
 	}
 	t := hex.EncodeToString(b[:])
 
-	apiKey.ID = uuid.New().String()
 	apiKey.CreatedAt = newT
+	apiKey.ID = uuid.New().String()
+	apiKey.Scopes = keyRequest.Scopes
+	apiKey.Creator = keyRequest.Creator
+	apiKey.Description = keyRequest.Description
 	apiKey.Hash = hex.EncodeToString(common.ToSHA256Bytes([]byte(t)))
 
 	if success, err := data.insertItem("apikeys", apiKey); success {
@@ -218,10 +223,11 @@ func (data *DataStore) GetUserNotebookNames(username string) (names []NotebookRe
 
 //GetPageCreator ...
 func (data *DataStore) GetPageCreator(pageID string) (name string, e error) {
+	var creator map[string]string
 	projection := bson.D{{"creator", 1}, {"_id", 0}}
 	result := data.db.Collection("pages", nil).FindOne(context.Background(), bson.M{"id": pageID}, options.FindOne().SetProjection(projection))
-	e = common.LogError("", result.Decode(&name))
-	return name, e
+	e = common.LogError("", result.Decode(&creator))
+	return creator["creator"], e
 }
 
 //GetTags ...
@@ -255,13 +261,24 @@ func (data *DataStore) DeleteAPIKey(id string) error {
 }
 
 //DeletePage Deletes the Page with the ID specified.
-func (data *DataStore) DeletePage(pageID string) error {
+func (data *DataStore) DeletePage(pageID, notebookID string) error {
 	r, err := data.db.Collection("pages", nil).DeleteOne(context.Background(), bson.M{"id": pageID}, &options.DeleteOptions{})
 	if r.DeletedCount == 0 {
 		return errors.New("page id " + pageID + " not found")
-	} else {
-		return err
 	}
+	if err == nil {
+		r, err := data.db.Collection("notebooks", nil).UpdateOne(context.Background(), bson.M{"id": notebookID}, bson.M{"$pull": bson.M{"pages": bson.M{"id": pageID}}}, &options.UpdateOptions{})
+		if r.ModifiedCount == 0 && err == nil {
+			return errors.New("not modified")
+		} else if r.MatchedCount == 0 && err == nil {
+			return errors.New("not found")
+		} else if err != nil {
+			return err
+		} else {
+			return nil
+		}
+	}
+	return err
 }
 
 //DeleteTag Deletes a tag that has no assigned docs. If this function is called on with a tagid that is in active use an error is returned.
@@ -283,26 +300,30 @@ func (data *DataStore) DeleteTag(tagID string) error {
 }
 
 //DeleteNotebook ...
-func (data *DataStore) DeleteNotebook(id string) error {
-	var pages []PageReference
-	projection := bson.D{{"pages", 1}, {"_id", 0}}
-	r := data.db.Collection("notebook", nil).FindOne(context.Background(), bson.M{"id": id}, options.FindOne().SetProjection(projection))
+func (data *DataStore) DeleteNotebook(id string) ([]PageReference, error) {
+	common.LogDebug("id", id, "delete id")
+	var notebook Notebook
+	r := data.db.Collection("notebooks", nil).FindOne(context.Background(), bson.M{"id": id}, &options.FindOneOptions{})
 	if r.Err() != nil {
-		return r.Err()
+		return nil, common.LogError("", r.Err())
 	}
 
-	if err := r.Decode(&pages); err != nil {
-		return err
+	if err := r.Decode(&notebook); err != nil {
+		return nil, common.LogError("", err)
+
 	}
 
-	for _, p := range pages {
-		_, err := data.db.Collection("pages", nil).DeleteOne(context.Background(), bson.M{"id": p.ID}, &options.DeleteOptions{})
-		if err != nil {
-			return err
+	if len(notebook.Pages) > 0 {
+		for _, p := range notebook.Pages {
+			_, err := data.db.Collection("pages", nil).DeleteOne(context.Background(), bson.M{"id": p.ID}, &options.DeleteOptions{})
+			if err != nil {
+				return nil, common.LogError("", err)
+			}
 		}
 	}
-	_, err := data.db.Collection("notebooks", nil).DeleteOne(context.Background(), bson.M{"id": id}, &options.DeleteOptions{})
-	return err
+	dr, err := data.db.Collection("notebooks", nil).DeleteOne(context.Background(), bson.M{"id": id}, &options.DeleteOptions{})
+	common.LogDebug("delcnt", dr.DeletedCount, "")
+	return notebook.Pages, common.LogError("", err)
 }
 
 //UpdatePage ...

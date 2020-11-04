@@ -2,9 +2,12 @@ package notebook
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 
+	"github.com/minio/sio"
+	"go.alargerobot.dev/notebook/common"
 	"go.alargerobot.dev/notebook/crypto"
 	"go.alargerobot.dev/notebook/data"
 )
@@ -71,7 +74,7 @@ func (notesAPI *ServiceAPI) NewPage(page data.NewPageRequest) error {
 			}
 			entryCryptoKey := crypto.PageEncryptionKey{EntryKey: sealed, SealedMasterKey: vSealed}
 			ecKey, _ := json.Marshal(entryCryptoKey)
-			if e := notesAPI.vaultClient.WriteKeyToKVStorage(string(ecKey), "notes/"+page.NotebookID+"/"+page.Metadata.ID); e != nil {
+			if e := notesAPI.vaultClient.WriteKeyToKVStorage(string(ecKey), page.NotebookID+"/"+page.Metadata.ID); e != nil {
 				return e
 			}
 		} else {
@@ -91,9 +94,8 @@ func (notesAPI *ServiceAPI) ReadPage(pageID, notebookID string) (string, error) 
 	if file, err := os.OpenFile("notebooks/"+notebookID+"/"+pageID, os.O_RDONLY, 0600); os.IsNotExist(err) {
 		return "", err
 	} else {
-		if contentKey, err := notesAPI.vaultClient.ReadKeyFromKV("notes/" + notebookID + "/" + pageID); err == nil {
-			data, _ := base64.StdEncoding.DecodeString(string(contentKey))
-			common.LogError("", json.Unmarshal(data, &entryCryptoKey))
+		if contentKey, err := notesAPI.vaultClient.ReadKeyFromKV(notebookID + "/" + pageID); err == nil {
+			common.LogError("", json.Unmarshal([]byte(contentKey), &entryCryptoKey))
 			if masterKey, err := notesAPI.vaultClient.UnsealKey("notebook", entryCryptoKey.SealedMasterKey, crypto.Context{"pageiD": pageID}); err == nil {
 				entryKey.Unseal(masterKey[:], entryCryptoKey.EntryKey)
 				decryptor, err := sio.DecryptReader(file, sio.Config{Key: entryKey[:], MinVersion: sio.Version20})
@@ -113,28 +115,36 @@ func (notesAPI *ServiceAPI) ReadPage(pageID, notebookID string) (string, error) 
 
 //DeletePage ...
 func (notesAPI *ServiceAPI) DeletePage(pageID, notebookID string) error {
-	if err := notesAPI.data.DeletePage(pageID); err == nil {
+	if err := notesAPI.data.DeletePage(pageID, notebookID); err == nil {
 		wd, _ := os.Getwd()
 		common.LogError("", os.Remove(wd+"/notebooks/"+notebookID+"/"+pageID))
-		return notesAPI.vaultClient.DeleteKeyFromKV("notes/" + notebookID + "/" + pageID)
+		return notesAPI.vaultClient.DeleteKeyFromKV(notebookID + "/" + pageID)
 	} else {
 		return err
 	}
 }
 
 //NewNotebook ...
-func (notesAPI *ServiceAPI) NewNotebook(notebook data.Notebook) error {
+func (notesAPI *ServiceAPI) NewNotebook(notebook data.Notebook) (data.NotebookReference, error) {
 	if err := notesAPI.data.NewNotebook(notebook); err == nil {
-		return os.Mkdir("notebooks/"+notebook.ID, 0600)
+		return data.NotebookReference{ID: notebook.ID, Name: notebook.Name}, os.Mkdir("notebooks/"+notebook.ID, 0600)
 	} else {
-		return err
+		return data.NotebookReference{}, err
 	}
 }
 
 //DeleteNotebook ...
 func (notesAPI *ServiceAPI) DeleteNotebook(id string) error {
-	if err := notesAPI.data.DeleteNotebook(id); err == nil {
+	//TODO: Delete vault keys too.
+	if pages, err := notesAPI.data.DeleteNotebook(id); err == nil {
 		wd, _ := os.Getwd()
+
+		for _, pageRef := range pages {
+			err = notesAPI.vaultClient.DeleteKeyFromKV(id + "/" + pageRef.ID)
+			if err != nil {
+				return err
+			}
+		}
 		return os.RemoveAll(wd + "/notebooks/" + id)
 	} else {
 		return common.LogError("", err)

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -45,13 +46,12 @@ func (api *Routes) InitAPIRoutes() {
 	api.router.Handle("/api/ash/auth/token", common.RequestWrapper(common.Nothing, "GET", api.authcode))
 
 	api.router.Handle("/api/ash/user/apikeys/:user", common.RequestWrapper(api.user.NotAnAPIKey, "POST", api.apikeys))
-
 	api.router.Handle("/api/ash/user/apikey/new", common.RequestWrapper(api.user.NotAnAPIKey, "POST", api.newapikey))
 	api.router.Handle("/api/ash/user/apikey", common.RequestWrapper(api.user.NotAnAPIKey, "DELETE", api.deleteapikey))
 
 	api.router.Handle("/api/ash/notebooks", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.notebooks))
 
-	api.router.Handle("/api/ash/notebook/new", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newnotebook))
+	api.router.Handle("/api/ash/notebook/new/:name", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newnotebook))
 	api.router.Handle("/api/ash/notebook/:nbid", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.pages))
 	api.router.Handle("/api/ash/notebook/:nbid/burn", common.RequestWrapper(api.user.AnyTokenProvided, "DELETE", api.deletenotebook))
 	api.router.Handle("/api/ash/notebook/:nbid/page", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newpage))
@@ -81,14 +81,15 @@ func (api *Routes) authcode(resp http.ResponseWriter, r *http.Request) {
 		} else {
 			if e := json.Unmarshal(body, &serviceResp); e != nil {
 				common.WriteFailureResponse(e, resp, "authcode", 500)
-			} else {
-				if serviceResp.Status == "failed" {
-					serviceResp.HttpStatusCode = 500
-				} else {
-					serviceResp.HttpStatusCode = 200
-				}
-				common.WriteAPIResponseStruct(resp, serviceResp)
+				return
 			}
+			if serviceResp.Status == "failed" {
+				serviceResp.HttpStatusCode = 500
+			} else {
+				serviceResp.HttpStatusCode = 200
+			}
+			common.WriteAPIResponseStruct(resp, serviceResp)
+
 		}
 	} else {
 		common.WriteFailureResponse(err, resp, "authcode", 500)
@@ -116,12 +117,20 @@ func (api *Routes) apikeys(resp http.ResponseWriter, r *http.Request) {
 	}
 }
 func (api *Routes) newapikey(resp http.ResponseWriter, r *http.Request) {
-	var keyDetails data.UserAPIKey
+	var keyDetails data.NewAPIKeyRequest
 	if api.user.HasPermission(r, "admin:apikey") {
 		body, _ := ioutil.ReadAll(r.Body)
-		json.Unmarshal(body, &keyDetails)
-		if newKeyResp, err := api.data.NewAPIKey(keyDetails); err == nil {
-			common.WriteAPIResponseStruct(resp, common.CreateAPIRespFromObject(newKeyResp, nil, 500))
+		if err := json.Unmarshal(body, &keyDetails); err != nil {
+			common.WriteFailureResponse(err, resp, "newapikey", 500)
+			return
+		}
+		if username, err := api.user.GetUsernameFromToken(r); err == nil {
+			keyDetails.Creator = username
+			if newKeyResp, err := api.data.NewAPIKey(keyDetails); err == nil {
+				common.WriteAPIResponseStruct(resp, common.CreateAPIRespFromObject(newKeyResp, nil, 500))
+			} else {
+				common.WriteFailureResponse(err, resp, "newapikey", 500)
+			}
 		} else {
 			common.WriteFailureResponse(err, resp, "newapikey", 500)
 		}
@@ -133,7 +142,10 @@ func (api *Routes) deleteapikey(resp http.ResponseWriter, r *http.Request) {
 	var delReq data.DeleteAPIKeyRequest
 	if api.user.HasPermission(r, "admin:apikey") {
 		body, _ := ioutil.ReadAll(r.Body)
-		json.Unmarshal(body, &delReq)
+		if err := json.Unmarshal(body, &delReq); err != nil {
+			common.WriteFailureResponse(err, resp, "deleteapikey", 500)
+			return
+		}
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
 			if username != string(delReq.Creator) {
 				common.WriteFailureResponse(errors.New("forbidden"), resp, "deleteapikey", 403)
@@ -162,15 +174,21 @@ func (api *Routes) notebooks(resp http.ResponseWriter, r *http.Request) {
 func (api *Routes) newnotebook(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "notebook:create") {
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
-			body, _ := ioutil.ReadAll(r.Body)
-			common.WriteResponse(resp, 400, nil, api.notebookSvc.NewNotebook(data.Notebook{
-				Name:  string(body),
+			common.LogDebug("name", vestigo.Param(r, "name"), "")
+			content, err := base64.RawURLEncoding.DecodeString(vestigo.Param(r, "name"))
+			if err != nil {
+				common.WriteFailureResponse(err, resp, "newnotebook", 500)
+				return
+			}
+			ref, err := api.notebookSvc.NewNotebook(data.Notebook{
+				Name:  string(content),
 				ID:    strings.TrimSpace(uuid.New().String()),
 				Owner: strings.TrimSpace(username),
 				Pages: []data.PageReference{},
-			}))
+			})
+			common.WriteResponse(resp, 400, ref, err)
 		} else {
-			common.WriteFailureResponse(errors.New("failed to get username"), resp, "newnotebook", 500)
+			common.WriteFailureResponse(err, resp, "newnotebook", 500)
 		}
 	} else {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "newnotebook", 401)
@@ -196,7 +214,10 @@ func (api *Routes) newpage(resp http.ResponseWriter, r *http.Request) {
 	var newPage data.NewPageRequest
 	if api.user.HasPermission(r, "notebook:create") {
 		body, _ := ioutil.ReadAll(r.Body)
-		common.LogError("", json.Unmarshal(body, &newPage))
+		if err := json.Unmarshal(body, &newPage); err != nil {
+			common.WriteFailureResponse(err, resp, "newpage", 500)
+			return
+		}
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
 			newPage.Metadata.Creator = username
 			newPage.Metadata.ID = uuid.New().String()
@@ -204,6 +225,7 @@ func (api *Routes) newpage(resp http.ResponseWriter, r *http.Request) {
 		} else {
 			common.WriteFailureResponse(err, resp, "newpage", 400)
 		}
+
 	} else {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "newpage", 401)
 	}

@@ -81,14 +81,14 @@ func (u *Auth) NotAnAPIKey(r *http.Request) common.APIResponse {
 			return common.CreateAPIResponse("success", nil, 200)
 		} else {
 			if tokenType != "JWT" {
-				return common.CreateAPIResponse("failed", errors.New("the provided token was not the correct type"), 200)
+				return common.CreateAPIResponse("failed", errors.New("the provided token was not the correct type"), 403)
 			}
 			if validToken == false {
-				return common.CreateAPIResponse("failed", errors.New("invalid token"), 200)
+				return common.CreateAPIResponse("failed", errors.New("invalid token"), 401)
 			}
 		}
 	}
-	return common.CreateAPIResponse("failed", errors.New("no token was provided"), 200)
+	return common.CreateAPIResponse("failed", errors.New("no token was provided"), 401)
 }
 
 //ValidateAPIToken Checks that the provided token is valid and allowed to perform the provided action.
@@ -171,7 +171,8 @@ func (u *Auth) getTokenType(token string) (validToken bool, tokenType string) {
 		validToken = true
 		tokenType = "JWT"
 	} else {
-		if _, err := u.datastore.GetAPIKey(token); err == nil {
+		hashedToken := hex.EncodeToString(common.ToSHA256Bytes([]byte(token)))
+		if _, err := u.datastore.GetAPIKey(hashedToken); err == nil {
 			validToken = true
 			tokenType = "API"
 		} else {

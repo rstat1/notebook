@@ -15,6 +15,7 @@ const (
 	tokenRenewTime       = 1440
 	tokenRenewTimeStr    = "60s"
 	vaultKVPath          = "/secret/notebook/"
+	vaultKVPrefix        = "notes"
 	vaultDecryptEndpoint = "/transit/decrypt/"
 	vaultEncryptEndpoint = "/transit/encrypt/"
 	vaultDataKeyEndpoint = "/transit/datakey/plaintext/"
@@ -121,15 +122,13 @@ func (kms *VaultKMS) Decrypt(cipherBlob string) ([]byte, error) {
 
 //WriteKeyToKVStorage Writes decryption key to the specified route in Vault
 func (kms *VaultKMS) WriteKeyToKVStorage(key, path string) error {
+	kvPrefix := vaultKVPrefix
 	payload := map[string]interface{}{}
 	payload["key"] = key
-	var keyName string
 	if common.DevMode {
-		keyName = "-dev"
-	} else {
-		keyName = "-prod"
+		kvPrefix += "-dev"
 	}
-	if _, e := kms.client.Logical().Write(vaultKVPath+path+keyName, payload); e != nil {
+	if _, e := kms.client.Logical().Write(vaultKVPath+"/"+kvPrefix+"/"+path, payload); e != nil {
 		return e
 	}
 	return nil
@@ -137,13 +136,11 @@ func (kms *VaultKMS) WriteKeyToKVStorage(key, path string) error {
 
 //ReadKeyFromKV Read a decryption key stored at the specified path from Vault
 func (kms *VaultKMS) ReadKeyFromKV(path string) (string, error) {
-	var keyName string
+	kvPrefix := vaultKVPrefix
 	if common.DevMode {
-		keyName = "-dev"
-	} else {
-		keyName = "-prod"
+		kvPrefix += "-dev"
 	}
-	if value, e := kms.client.Logical().Read(vaultKVPath + path + keyName); e != nil {
+	if value, e := kms.client.Logical().Read(vaultKVPath + "/" + kvPrefix + "/" + path); e != nil {
 		return "", e
 	} else {
 		if value != nil {
@@ -156,14 +153,11 @@ func (kms *VaultKMS) ReadKeyFromKV(path string) (string, error) {
 
 //DeleteKeyFromKV Deletes a decryption key stored at the specified path
 func (kms *VaultKMS) DeleteKeyFromKV(path string) error {
-	var keyName string
+	kvPrefix := vaultKVPrefix
 	if common.DevMode {
-		keyName = "-dev"
-	} else {
-		keyName = "-prod"
+		kvPrefix += "-dev"
 	}
-
-	if _, e := kms.client.Logical().Delete(vaultKVPath + path + keyName); e != nil {
+	if _, e := kms.client.Logical().Delete(vaultKVPath + "/" + kvPrefix + "/" + path); e != nil {
 		return common.LogError("", e)
 	}
 	return nil
