@@ -154,6 +154,21 @@ func (kms *VaultKMS) ReadKeyFromKV(path string) (string, error) {
 	}
 }
 
+//DeleteKeyFromKV Deletes a decryption key stored at the specified path
+func (kms *VaultKMS) DeleteKeyFromKV(path string) error {
+	var keyName string
+	if common.DevMode {
+		keyName = "-dev"
+	} else {
+		keyName = "-prod"
+	}
+
+	if _, e := kms.client.Logical().Delete(vaultKVPath + path + keyName); e != nil {
+		return common.LogError("", e)
+	}
+	return nil
+}
+
 //UnsealKey Unseals the provided key using the provided master key. Returns plaintext key. Or an error.
 func (kms *VaultKMS) UnsealKey(keyID string, sealedKey []byte, ctx Context) (key [32]byte, e error) {
 	if bytes, err := json.Marshal(&ctx); err == nil {
@@ -250,7 +265,7 @@ func (kms *VaultKMS) getTokenLeaseTime() time.Duration {
 //is a very short lived token that only has access to AppRole Secret ID for this service.
 func (kms *VaultKMS) login() error {
 	kms.client.SetToken(os.Getenv("ARSID_ACCESS_KEY"))
-	if arsid, e := kms.client.Logical().Write("auth/approle/role/dev/secret-id", nil); e == nil {
+	if arsid, e := kms.client.Logical().Write("auth/approle/role/notebook/secret-id", nil); e == nil {
 		t, e := kms.client.Logical().Write("auth/approle/login", map[string]interface{}{"role_id": os.Getenv("APPROLE_ID"), "secret_id": arsid.Data["secret_id"].(string)})
 		if e != nil {
 			return e

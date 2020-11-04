@@ -12,11 +12,11 @@ export class ConfigService {
 
 	public static GetWSURLFor(api: string): string {
 		ConfigService.SetBaseURL("wss:");
-		return ConfigService.API_ENDPOINT + "/sphere/" + api;
+		return ConfigService.API_ENDPOINT + "/ash/" + api;
 	}
 	public static GetAPIURLFor(api: string, queryVars: string = ""): string {
 		ConfigService.SetBaseURL(window.location.protocol);
-		return ConfigService.API_ENDPOINT + "/sphere/" + api;
+		return ConfigService.API_ENDPOINT + "/ash/" + api;
 	}
 	public static GetTrinityURLFor(api: string): string {
 		ConfigService.SetBaseURL(window.location.protocol);

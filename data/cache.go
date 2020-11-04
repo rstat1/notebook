@@ -7,8 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"go.alargerobot.dev/devcentral/common"
 	"github.com/mediocregopher/radix.v2/pool"
+	"go.alargerobot.dev/notebook/common"
 )
 
 type CacheService struct {

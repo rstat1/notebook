@@ -34,6 +34,7 @@ func NewUserService(db *data.DataStore, vaultClient *crypto.VaultKMS) *Auth {
 	authSvc.knownScopes["notebook:write"] = true
 	authSvc.knownScopes["notebook:delete"] = true
 	authSvc.knownScopes["notebook:create"] = true
+	authSvc.knownScopes["tags"] = true
 	authSvc.knownScopes["admin"] = true
 	authSvc.knownScopes["admin:apikey"] = true
 
@@ -156,14 +157,10 @@ func (u *Auth) HasPermission(r *http.Request, scope string) bool {
 	if access, e := u.GetAccessLevelFromToken(r); e != nil {
 		return false
 	} else {
-		if strings.Contains(scope, "notebook:") {
-			if common.Contains(access.Scopes, "notebook") {
-				return true
-			}
-		} else if strings.Contains(scope, "admin:") {
-			if common.Contains(access.Scopes, "admin") {
-				return true
-			}
+		if strings.Contains(scope, "notebook:") && common.Contains(access.Scopes, "notebook") {
+			return true
+		} else if strings.Contains(scope, "admin:") && common.Contains(access.Scopes, "admin") {
+			return true
 		}
 		return common.Contains(access.Scopes, scope)
 	}
@@ -195,7 +192,7 @@ func (u *Auth) getJWTAccess(token string) (data.AccessLevel, error) {
 			json.Unmarshal(body, &serviceResp)
 			json.Unmarshal([]byte(serviceResp.Response), &user)
 			lvl := data.AccessLevel{Username: user.Username}
-			lvl.Scopes = []string{"notebook"}
+			lvl.Scopes = []string{"notebook", "tags"}
 			if user.Group == "root" {
 				lvl.Scopes = append(lvl.Scopes, "admin")
 			} else {

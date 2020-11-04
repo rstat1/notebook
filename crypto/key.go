@@ -9,15 +9,27 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"io"
 
-	"go.alargerobot.dev/devcentral/common"
 	"github.com/minio/sio"
+	"go.alargerobot.dev/notebook/common"
 )
 
 //Key ...
 type Key [32]byte
+
+//KeyInfo ...
+type KeyInfo struct {
+	IV        string `json:"iv"`
+	SealedKey string `json:"key"`
+	BlobName  string `json:"name"`
+}
+
+//PageEncryptionKey ...
+type PageEncryptionKey struct {
+	SealedMasterKey []byte  `json:"masterKey"`
+	EntryKey        KeyInfo `json:"valueKey"`
+}
 
 //GenerateKey ...
 func GenerateKey(masterkey []byte, file string) Key {
@@ -26,7 +38,6 @@ func GenerateKey(masterkey []byte, file string) Key {
 
 	if _, err := io.ReadFull(rand.Reader, nonce[:]); err != nil {
 		common.LogError("", err)
-		fmt.Printf("Failed to read random data: %v", err) // add error handling
 	}
 
 	sha := sha256.New()
@@ -38,7 +49,7 @@ func GenerateKey(masterkey []byte, file string) Key {
 }
 
 //Seal ...
-func (k *Key) Seal(master []byte, file string) (sealedKey ProjectBlobKey, e error) {
+func (k *Key) Seal(master []byte, file string) (sealedKey KeyInfo, e error) {
 	var encryptedKey bytes.Buffer
 
 	iv := k.generateIV()
@@ -46,12 +57,12 @@ func (k *Key) Seal(master []byte, file string) (sealedKey ProjectBlobKey, e erro
 	mac := hmac.New(sha256.New, master)
 	mac.Write(iv[:])
 	mac.Write([]byte(file))
-	mac.Write([]byte("DEVAPP-HMAC-SHA256"))
+	mac.Write([]byte("NOTES-HMAC-SHA256"))
 
 	config := sio.Config{MinVersion: sio.Version20, Key: mac.Sum(nil)}
 	if num, err := sio.Encrypt(&encryptedKey, bytes.NewReader(k[:]), config); num != 64 || err != nil {
 		common.LogError("", err)
-		return ProjectBlobKey{}, err
+		return KeyInfo{}, err
 	}
 	sealedKey.IV = base64.StdEncoding.EncodeToString(iv[:])
 	sealedKey.BlobName = file
@@ -61,7 +72,7 @@ func (k *Key) Seal(master []byte, file string) (sealedKey ProjectBlobKey, e erro
 }
 
 //Unseal ...
-func (k *Key) Unseal(master []byte, sealedKey ProjectBlobKey) error {
+func (k *Key) Unseal(master []byte, sealedKey KeyInfo) error {
 	var decryptedKey bytes.Buffer
 	iv, err := base64.StdEncoding.DecodeString(sealedKey.IV)
 	if err != nil {
@@ -75,7 +86,7 @@ func (k *Key) Unseal(master []byte, sealedKey ProjectBlobKey) error {
 	mac := hmac.New(sha256.New, master)
 	mac.Write(iv)
 	mac.Write([]byte(sealedKey.BlobName))
-	mac.Write([]byte("DEVAPP-HMAC-SHA256"))
+	mac.Write([]byte("NOTES-HMAC-SHA256"))
 
 	config := sio.Config{MinVersion: sio.Version20, Key: mac.Sum(nil)}
 	if n, err := sio.Decrypt(&decryptedKey, bytes.NewReader(key[:]), config); n != 32 || err != nil {

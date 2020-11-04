@@ -73,8 +73,7 @@ type Page struct {
 	Tags       []string `json:"tags"`
 	Title      string   `json:"title"`
 	Creator    string   `json:"creator"`
-	Filename   string   `json:"filename"`	
-	LastEdited int64    `json:"last_edited"`
+	LastEdited int64    `json:"lastEdited"`
 }
 
 //PageReference ...
@@ -82,6 +81,12 @@ type PageReference struct {
 	ID    string    `json:"id"`
 	Title string    `json:"title"`
 	Tags  []PageTag `json:"tags"`
+}
+
+//NotebookReference ...
+type NotebookReference struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 //PageTag ...

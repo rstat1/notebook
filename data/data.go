@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -52,16 +53,20 @@ func (data *DataStore) ConnectToMongoDB() error {
 
 //NewPage ...
 func (data *DataStore) NewPage(page Page, notebookID string) error {
-	if _, err := data.insertUniqueItem("pages", page, bson.M{"title": page.Title}); err == nil {
-		r, err := data.db.Collection("notebooks", nil).UpdateOne(context.Background(), bson.M{"id": notebookID}, bson.M{"$push": bson.M{"pages": page.ID}}, &options.UpdateOptions{})
-		if r.ModifiedCount == 0 && err == nil {
-			return errors.New("not modified")
-		} else if r.MatchedCount == 0 && err == nil {
-			return errors.New("not found")
-		} else if err != nil {
-			return err
+	if inserted, err := data.insertUniqueItem("pages", page, bson.M{"title": page.Title}); err == nil {
+		if inserted {
+			r, err := data.db.Collection("notebooks", nil).UpdateOne(context.Background(), bson.M{"id": notebookID}, bson.M{"$push": bson.M{"pages": page.ID}}, &options.UpdateOptions{})
+			if r.ModifiedCount == 0 && err == nil {
+				return errors.New("not modified")
+			} else if r.MatchedCount == 0 && err == nil {
+				return errors.New("not found")
+			} else if err != nil {
+				return err
+			} else {
+				return nil
+			}
 		} else {
-			return nil
+			return errors.New("page with this title already exists")
 		}
 	} else {
 		return err
@@ -70,13 +75,23 @@ func (data *DataStore) NewPage(page Page, notebookID string) error {
 
 //NewTag ...
 func (data *DataStore) NewTag(tag PageTag) error {
-	_, err := data.insertUniqueItem("tags", tag, bson.M{"tagValue": tag.TagValue})
+	inserted, err := data.insertUniqueItem("tags", tag, bson.M{"tagvalue": tag.TagValue})
+	if !inserted {
+		return errors.New("this tag already exists")
+	}
+	if err == nil {
+		data.Cache.DeleteString("notescache", "tags")
+		return nil
+	}
 	return err
 }
 
 //NewNotebook ...
 func (data *DataStore) NewNotebook(notebook Notebook) error {
-	_, err := data.insertUniqueItem("notebooks", notebook, bson.M{"name": notebook.Name})
+	inserted, err := data.insertUniqueItem("notebooks", notebook, bson.M{"name": notebook.Name})
+	if !inserted {
+		return errors.New("this tag already exists")
+	}
 	return err
 }
 
@@ -141,9 +156,9 @@ func (data *DataStore) GetPageTags(pageID string) (tags []PageTag, e error) {
 }
 
 //GetPageByID ...
-func (data *DataStore) GetPageByID(id int) (page Page, e error) {
+func (data *DataStore) GetPageByID(pageID string) (page Page, e error) {
 	projection := bson.D{{"_id", 0}}
-	result := data.db.Collection("pages", nil).FindOne(context.Background(), bson.M{"id": id}, options.FindOne().SetProjection(projection))
+	result := data.db.Collection("pages", nil).FindOne(context.Background(), bson.M{"id": pageID}, options.FindOne().SetProjection(projection))
 	e = common.LogError("", result.Decode(&page))
 	return page, e
 }
@@ -187,29 +202,66 @@ func (data *DataStore) GetAPIKeys(username string) (keys []UserAPIKey, err error
 }
 
 //GetUserNotebookNames ...
-func (data *DataStore) GetUserNotebookNames(username string) (names []string, err error) {
-	var name string
-	projection := bson.D{{"name", 1}, {"_id", 0}}
+func (data *DataStore) GetUserNotebookNames(username string) (names []NotebookReference, err error) {
+	var nameList map[string]string
+	projection := bson.D{{"name", 1}, {"id", 1}, {"_id", 0}}
 	r, e := data.db.Collection("notebooks", nil).Find(context.Background(), bson.M{"owner": username}, options.Find().SetProjection(projection))
 	for r.Next(context.Background()) {
-		if err = common.LogError("GetAPIKey(decode)", r.Decode(&name)); err != nil {
+		if err = common.LogError("GetUserNotebookNames(decode)", r.Decode(&nameList)); err != nil {
 			return nil, err
 		}
-		names = append(names, name)
+		common.LogDebug("list", nameList, "")
+		names = append(names, NotebookReference{Name: nameList["name"], ID: nameList["id"]})
 	}
 	return names, e
 }
 
+//GetPageCreator ...
+func (data *DataStore) GetPageCreator(pageID string) (name string, e error) {
+	projection := bson.D{{"creator", 1}, {"_id", 0}}
+	result := data.db.Collection("pages", nil).FindOne(context.Background(), bson.M{"id": pageID}, options.FindOne().SetProjection(projection))
+	e = common.LogError("", result.Decode(&name))
+	return name, e
+}
+
+//GetTags ...
+func (data *DataStore) GetTags() (tags []PageTag, e error) {
+	if tagJSON := data.Cache.GetString("notescache", "tags"); tagJSON != "" {
+		json.Unmarshal([]byte(tagJSON), &tags)
+		return tags, nil
+	} else {
+		var tag PageTag
+		projection := bson.D{{"_id", 0}}
+		r, e := data.db.Collection("tags", nil).Find(context.Background(), bson.M{}, options.Find().SetProjection(projection))
+		for r.Next(context.Background()) {
+			if e = common.LogError("", r.Decode(&tag)); e != nil {
+				return nil, e
+			}
+			tags = append(tags, tag)
+		}
+		data.Cache.PutObject("notescache", "tags", tags)
+		return tags, e
+	}
+}
+
 //DeleteAPIKey ...
 func (data *DataStore) DeleteAPIKey(id string) error {
-	_, err := data.db.Collection("apikeys", nil).DeleteOne(context.Background(), bson.M{"id": id}, &options.DeleteOptions{})
-	return err
+	r, err := data.db.Collection("apikeys", nil).DeleteOne(context.Background(), bson.M{"id": id}, &options.DeleteOptions{})
+	if r.DeletedCount == 0 {
+		return errors.New("provided key ID was invalid")
+	} else {
+		return err
+	}
 }
 
 //DeletePage Deletes the Page with the ID specified.
 func (data *DataStore) DeletePage(pageID string) error {
-	_, err := data.db.Collection("pages", nil).DeleteOne(context.Background(), bson.M{"id": pageID}, &options.DeleteOptions{})
-	return err
+	r, err := data.db.Collection("pages", nil).DeleteOne(context.Background(), bson.M{"id": pageID}, &options.DeleteOptions{})
+	if r.DeletedCount == 0 {
+		return errors.New("page id " + pageID + " not found")
+	} else {
+		return err
+	}
 }
 
 //DeleteTag Deletes a tag that has no assigned docs. If this function is called on with a tagid that is in active use an error is returned.
@@ -219,6 +271,10 @@ func (data *DataStore) DeleteTag(tagID string) error {
 			return errors.New("this tag is still assigned to pages in a notebook")
 		} else {
 			_, err := data.db.Collection("tags", nil).DeleteOne(context.Background(), bson.M{"id": tagID}, &options.DeleteOptions{})
+			if err == nil {
+				data.Cache.DeleteString("notescache", "tags")
+				return nil
+			}
 			return err
 		}
 	} else {

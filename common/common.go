@@ -14,7 +14,6 @@ import (
 
 	"os"
 
-	"github.com/getsentry/raven-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -168,7 +167,7 @@ func BasicAuthRequired(validator func(string, string) (bool, error), handler fun
 
 //RequestWrapper ...
 func RequestWrapper(validator func(*http.Request) APIResponse, validMethod string, handler func(http.ResponseWriter, *http.Request)) http.Handler {
-	return http.HandlerFunc(raven.RecoveryHandler(func(writer http.ResponseWriter, request *http.Request) {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		if (validMethod != "") && (request.Method != validMethod) {
 			WriteAPIResponseStruct(writer, APIResponse{
 				Status:         "failed",
@@ -182,7 +181,7 @@ func RequestWrapper(validator func(*http.Request) APIResponse, validMethod strin
 				WriteAPIResponseStruct(writer, resp)
 			}
 		}
-	}))
+	})
 }
 
 //ValidateRequestMethod ...
@@ -308,8 +307,8 @@ func CommonProcessInit(dev, loadConfig bool) {
 		CurrentConfig.TrinitySID = sid
 	}
 
-	if skey, exists := os.LookupEnv("skey"); exists && skey != "" {
-		CurrentConfig.TrinitySID = skey
+	if skey, exists := os.LookupEnv("SKEY"); exists && skey != "" {
+		CurrentConfig.TrinitySKey = skey
 	}
 }
 

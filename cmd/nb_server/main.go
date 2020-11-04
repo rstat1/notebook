@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/husobee/vestigo"
+	"go.alargerobot.dev/notebook/api"
 	"go.alargerobot.dev/notebook/common"
 	"go.alargerobot.dev/notebook/crypto"
 	"go.alargerobot.dev/notebook/data"
@@ -33,7 +34,8 @@ func main() {
 	})
 
 	kms := crypto.NewVaultKMS(*dev)
-	data.NewDataStore(kms)
+
+	api.NewAPIRouter(data.NewDataStore(kms), router, *dev, kms)
 
 	if err := http.ListenAndServe("localhost:1013", router); err != nil {
 		common.LogError("", err)
