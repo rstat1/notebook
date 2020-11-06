@@ -4,7 +4,6 @@ import { Component, OnInit } from '@angular/core';
 import { MenuService } from 'app/services/menu.service';
 import { APIService } from 'app/services/api/api.service';
 import { AuthService } from 'app/services/auth/auth.service';
-import { WebSocketClient } from 'app/services/websocket.service';
 
 @Component({
 	selector: 'app-admin-root',
@@ -31,9 +30,8 @@ export class AdminRootComponent implements OnInit {
 	];
 
 	constructor(private auth: AuthService, public menu: MenuService, public api: APIService,
-		public router: Router, public route: ActivatedRoute, private ws: WebSocketClient) {
+		public router: Router, public route: ActivatedRoute) {
 
-		this.ws.Connect();
 		this.pathExtra = window.location.pathname;
 	}
 	ngOnInit() {

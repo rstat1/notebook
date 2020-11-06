@@ -1,7 +1,7 @@
 <div style="display: flex;">
 	<div class="project-list-button" (click)='showMenu("projects", $event)' [class.project-list-button-selected]="showProjectListMenu == true">
 		<mat-icon style="color:#689F38;">view_module</mat-icon>
-		<span class="project-name">Projects</span>
+		<span class="project-name">Notebooks</span>
 		<mat-icon>expand_more</mat-icon>
 	</div>
 	<div class="project-list-button" style="width: 146px;" (click)='showMenu("filter", $event)' [class.project-list-button-selected]="showSearch == true">
@@ -9,6 +9,10 @@
 		<span class="project-name">Filter by Tag</span>
 		<mat-icon>expand_more</mat-icon>
 	</div>
+	<button style="padding: 0px 5px 0px 0px" mat-button (click)="newDocument()">
+		<mat-icon style="vertical-align: text-bottom;padding-top: 3px;">add</mat-icon>
+		Add Note
+	</button>
 </div>
 <div #projects class="dropdown-box" [class.dropdown-shown]="showProjectListMenu == true" [class.dropdown-hidden]="showProjectListMenu == false">
 	<div id="scrollbox" style="height:500px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
@@ -17,13 +21,13 @@
 				<input matInput placeholder="Search" [(ngModel)]="filterText" (input)="filterProjects()">
 			</mat-form-field>
 		</div>
-		<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == false">Recently modified</div>
+		<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == false">All Notebooks</div>
 		<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == true">Search Results</div>
 		<div class="list-grid">
 			<div class="project-list-item" *ngFor="let p of filteredProjects" (click)="projectClicked(p)">
-				<div class="project-avatar avatar" [attr.data-name]="getInitials(p)"></div>
+				<div class="project-avatar avatar" [attr.data-name]="getInitials(p.name)"></div>
 				<div style="margin-top: 12px;">
-					<span>{{p}}</span>
+					<span>{{p.name}}</span>
 				</div>
 			</div>
 		</div>
@@ -41,10 +45,7 @@
 </div>
 <div class="page-margin">
 	<p class="page-title">{{pageTitle}}</p>
-	<button style="padding: 0px 5px 0px 0px" mat-button (click)="newDocument()">
-		<mat-icon style="vertical-align: text-bottom;padding-top: 3px;">add</mat-icon>
-		Add Note
-	</button>
+	
 </div>
 <div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="list">
 	<div class="list-element" *ngFor="let note of notes">
@@ -53,7 +54,7 @@
 			{{note.title}}
 			<mat-chip-list class="chip-list chip-list-list-item">
 				<mat-basic-chip class="status-chip-list-item" *ngFor="let t of note.tags">
-					{{t.tagValue}}
+					{{getTagValue(t)}}
 				</mat-basic-chip>
 			</mat-chip-list>
 		</div>

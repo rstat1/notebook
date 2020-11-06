@@ -18,16 +18,16 @@ export class AppComponent {
 	constructor(private api: APIService, private menu: MenuService, private router: Router,
 		private injector: Injector, public cmdListSvc: CommandListService) {
 		if (window.location.port == "4200") {
-			document.title = "devcentral-dev";
+			document.title += "-dev";
 		} else if (window.location.hostname.includes("dev-m")) {
-			document.title = "devcentral-test";
+			document.title += "-test";
 		}
 		this.menu.MenuItemClicked.subscribe(action => {
 			if (this.knownActions.includes(action)) {
 				this.router.navigate([action]);
 			}
 		});
-		const cmdList = createCustomElement(CommandListComponent, {injector});
+		const cmdList = createCustomElement(CommandListComponent, { injector });
 		customElements.define("command-list", cmdList)
-  	}
+	}
 }

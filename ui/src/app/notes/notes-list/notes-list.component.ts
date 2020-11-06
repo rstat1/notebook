@@ -1,13 +1,13 @@
+import { FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material';
 import { FocusMonitor } from "@angular/cdk/a11y";
 import { Router, ActivatedRoute } from '@angular/router';
-import { FormControl } from '@angular/forms';
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef, NgZone, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 
-import { Task, DocumentTag, DCDocument } from 'app/services/api/QueryResponses';
 import { APIService } from 'app/services/api/api.service';
-import { MatDialog } from '@angular/material';
-import { DocEditorComponent } from '../doc-editor/doc-editor.component';
 import { DataCacheService } from 'app/services/data-cache.service';
+import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
+import { PageTag, Page, NotebookReference, PageReference } from 'app/services/api/QueryResponses';
 
 @Component({
 	selector: 'app-notes-list',
@@ -23,12 +23,11 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	public haveFilter: boolean = false;
 	public showSearch: boolean = false;
 	public showProjectListMenu: boolean = false;
-	public notes: DCDocument[] = new Array<DCDocument>();
-	public projects: string[] = new Array<string>();
-	public docTags: DocumentTag[] = Array<DocumentTag>();
-	public docTagsMap: Map<number, string> = new Map();
-	public recentProjects: string[] = new Array<string>();
-	public filteredProjects: string[] = new Array<string>();
+	public notes: PageReference[] = new Array<PageReference>();
+	public projects: NotebookReference[] = new Array<NotebookReference>();
+	public docTags: PageTag[] = Array<PageTag>();
+	public docTagsMap: Map<string, string> = new Map();
+	public filteredProjects: NotebookReference[] = new Array<NotebookReference>();
 	public scrollbarOptions = {
 		scrollInertia: 0,
 		theme: 'dark',
@@ -42,30 +41,13 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		private cdr: ChangeDetectorRef, private zone: NgZone, private dialog: MatDialog, private cache: DataCacheService) { }
 
 	ngOnInit() {
-		this.filteredProjects = this.recentProjects;
 		this.route.params.subscribe((params) => { this.pageTitle = params.name + " Notes"; });
-		this.api.GetProjectsList(0).subscribe(resp => {
-			resp.data.projects.forEach(p => {
-				this.projects.push(p.projectName);
-			});
+		this.api.GetNotebookRefs().subscribe(resp => {
+			this.filteredProjects = this.projects = JSON.parse(resp.response);
 		});
-		this.api.GetRecentProjects().subscribe(resp => {
-			resp.data.recent.forEach(p => {
-				this.recentProjects.push(p.projectName);
-			});
-		});
-		// this.api.GetTags().subscribe(resp => {
-		// 	resp.data.alltags.forEach(p => {
-		// 		this.docTagsMap.set(p.tagId, p.tagValue);
-		// 		this.docTags.push(p);
-		// 	});
-		// });
 		this.cache.getTagList().subscribe(resp => {
 			this.docTags = resp;
 			this.docTagsMap = this.cache.getTagMap();
-		});
-		this.api.GetDocRefsWithTags([]).subscribe(resp => {
-			this.notes = resp.data.documents;
 		});
 	}
 	ngAfterViewInit() {
@@ -96,17 +78,17 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		} else {
 			this.pageTitle = "All Notes";
 		}
-		this.api.GetDocRefsWithTags(tagsSelected).subscribe(resp => {
-			this.notes = resp.data.documents;
-		});
+	}
+	public getTagValue(value: string): string {
+		return this.docTagsMap.get(value);
 	}
 	public filterProjects() {
 		if (this.filterText != "") {
 			this.haveFilter = true;
-			this.filteredProjects = this.projects.filter(name => name.indexOf(this.filterText, 0) > -1, this);
+			this.filteredProjects = this.projects.filter(notebook => notebook.name.indexOf(this.filterText, 0) > -1, this);
 		} else {
 			this.haveFilter = false;
-			this.filteredProjects = this.recentProjects;
+			this.filteredProjects = this.projects;
 		}
 	}
 	public showMenu(which: string, event: MouseEvent) {
@@ -122,8 +104,12 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			this.showProjectListMenu = false;
 		}
 	}
-	public projectClicked(name: string) {
+	public projectClicked(notebook: NotebookReference) {
 		this.showProjectListMenu = false;
+		this.pageTitle = notebook.name;
+		this.api.GetPages(notebook.id).subscribe(resp => {
+			this.notes = JSON.parse(resp.response);
+		});
 	}
 	public getInitials(projectName: string) {
 		return projectName.substring(0, 2);

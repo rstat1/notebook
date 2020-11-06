@@ -4,7 +4,6 @@ import { Component, OnInit } from '@angular/core';
 import { MenuService } from 'app/services/menu.service';
 import { APIService } from 'app/services/api/api.service';
 import { AuthService } from 'app/services/auth/auth.service';
-import { StatusDialogComponent } from 'app/admin/admin-status-dialog/status-dialog.component';
 
 @Component({
 	selector: 'app-admin-home',
@@ -27,25 +26,12 @@ export class AdminHomeComponent implements OnInit {
 		private dialog: MatDialog,) { }
 
 	ngOnInit() {
-		this.api.GetSystemStats().subscribe(resp => {
-			this.projects = resp.data.systemStats.projectCount;
-			this.tasks = resp.data.systemStats.tasksCount;
-			this.subtasks = resp.data.systemStats.subTasksCount;
-			this.groups = resp.data.systemStats.groupCount;
-			this.commits = resp.data.systemStats.commits;
-			// this.notes = resp.data.systemStats.notesCount;
-			this.diskSpace = resp.data.systemStats.diskSpace;
-			if (resp.data.systemStats.backupStatus != "failed" && resp.data.systemStats.backupStatus != null) {
-				this.backupDate = resp.data.systemStats.backupStatus
-			} else {
-				this.backupDate = '';
-			}
-		})
+
 	}
 	public showLog() {
-		this.dialog.open(StatusDialogComponent, {
-			minWidth:'500px',
-			data: {title:"Backup Log", subject: "BACKUPMSG"},
-		})
+		// this.dialog.open(StatusDialogComponent, {
+		// 	minWidth: '500px',
+		// 	data: { title: "Backup Log", subject: "BACKUPMSG" },
+		// })
 	}
 }

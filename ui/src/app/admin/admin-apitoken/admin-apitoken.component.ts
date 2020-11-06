@@ -27,53 +27,53 @@ export class AdminAPITokenComponent implements OnInit {
 	public displayedColumns = ['Name', "Created", "Scopes", "Action"];
 
 	constructor(private api: APIService, private snackBar: MatSnackBar, private dialog: MatDialog,
-		public auth: AuthService) {}
+		public auth: AuthService) { }
 
 	ngOnInit() {
-		this.api.GetTokens().subscribe(tokens => {
-			if (tokens.data.tokens != null) {
-				this.dataSource.data = tokens.data.tokens;
-				this.hasActiveTokens = true;
-			}
+		this.api.GetAPIKeys().subscribe(tokens => {
+			// if (tokens.data.tokens != null) {
+			// 	this.dataSource.data = tokens.data.tokens;
+			// 	this.hasActiveTokens = true;
+			// }
 		});
 	}
 	public save() {
-		let newToken: APIToken = new APIToken();
-		newToken.name = this.description;
-		newToken.scopes = this.scopes.join(",");
-		this.api.NewAPIToken(newToken).subscribe(resp => {
-			if (resp.errors.length > 0) {
-				this.snackBar.open(resp.errors[0].message, "", {
-					duration: 3000, horizontalPosition: "right",
-					verticalPosition: "top"
-				})
-			} else {
-				this.dialog.open(APITokenDialogComponent, {
-					width:'500px',
-					data: {token: resp.data.newToken.token},
-				})
-			}
-		})
+		// let newToken: APIToken = new APIToken();
+		// newToken.name = this.description;
+		// newToken.scopes = this.scopes.join(",");
+		// this.api.NewAPIToken(newToken).subscribe(resp => {
+		// 	if (resp.errors.length > 0) {
+		// 		this.snackBar.open(resp.errors[0].message, "", {
+		// 			duration: 3000, horizontalPosition: "right",
+		// 			verticalPosition: "top"
+		// 		})
+		// 	} else {
+		// 		this.dialog.open(APITokenDialogComponent, {
+		// 			width:'500px',
+		// 			data: {token: resp.data.newToken.token},
+		// 		})
+		// 	}
+		// })
 	}
 	public deleteToken(name: string) {
-		this.api.DeleteAPIToken(name).subscribe(r => {
-			if (r.data != null) {
-				this.snackBar.open("Deleted token: " + name, "", {
-					duration: 3000, horizontalPosition: "right",
-					verticalPosition: "top"
-				})
-				if (r.data.deleteToken.tokens != null) {
-					this.dataSource.data = r.data.deleteToken.tokens;
-				} else {
-					this.hasActiveTokens = false;
-				}
-			} else {
-				this.snackBar.open(r.errors[0].message, "", {
-					duration: 3000, horizontalPosition: "right",
-					verticalPosition: "top"
-				})
-			}
-		});
+		// this.api.DeleteAPIToken(name).subscribe(r => {
+		// 	if (r.data != null) {
+		// 		this.snackBar.open("Deleted token: " + name, "", {
+		// 			duration: 3000, horizontalPosition: "right",
+		// 			verticalPosition: "top"
+		// 		})
+		// 		if (r.data.deleteToken.tokens != null) {
+		// 			this.dataSource.data = r.data.deleteToken.tokens;
+		// 		} else {
+		// 			this.hasActiveTokens = false;
+		// 		}
+		// 	} else {
+		// 		this.snackBar.open(r.errors[0].message, "", {
+		// 			duration: 3000, horizontalPosition: "right",
+		// 			verticalPosition: "top"
+		// 		})
+		// 	}
+		// });
 	}
 	public scopeChanged(name: string) {
 		if (this.scopes.includes(name)) {

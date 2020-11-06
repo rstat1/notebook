@@ -2,7 +2,7 @@ import { UUID } from 'angular2-uuid';
 import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Component, OnInit, ElementRef, ViewChild, ComponentFactoryResolver, Injector, ComponentRef, Type } from '@angular/core';
 
-import { DocumentTag } from 'app/services/api/QueryResponses';
+import { PageTag } from 'app/services/api/QueryResponses';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { ICommandListEntry } from 'app/components/command-list/cmd-list-common';
 import { ListOverlayService } from 'app/notes/list-overlay/list-overlay.service';
@@ -26,7 +26,7 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 	public currentDate = new Date();
 	public showTagsPH: boolean = true;
 	public showTitlePH: boolean = true;
-	public tags: DocumentTag[] = new Array();
+	public tags: PageTag[] = new Array();
 	@ViewChild('editorBlock', { static: true }) public editor: ElementRef;
 	public scrollbarOptions = { scrollInertia: 0, theme: 'dark', scrollbarPosition: "inside", alwaysShowScrollbar: 0, autoHideScrollbar: true };
 
@@ -80,7 +80,7 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 	addTag(tagValue: string) {
 		tagValue = tagValue.replace('"', "")
 		this.cache.getTagList().subscribe(resp => {
-			var tag: DocumentTag = resp.find(tag => tag.tagValue == tagValue)
+			var tag: PageTag = resp.find(tag => tag.tagValue == tagValue)
 			if (!this.tags.includes(tag)) {
 				this.tags.push(tag);
 			}

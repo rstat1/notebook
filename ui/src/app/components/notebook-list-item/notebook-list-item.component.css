@@ -1,0 +1,51 @@
+.initials {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    color: white;
+    background-color: #A83D3E;
+    padding-top: 10px;
+    text-align: center;
+    text-transform: uppercase;
+    background-size: cover;
+    font-size: 18pt;
+    cursor: pointer;
+}
+.actions-bar {
+    flex: 0.3;
+    height: 33px;
+    margin-top:15px;
+    border-radius: 5px;
+    background-color: #1d1d1d;
+}
+.action-icon {
+    fill: none;
+    stroke: #A83D3E;
+    stroke-width: 2px;
+}
+.icons {
+    display: flex;
+    margin-top: 4px;
+    margin-left: 8px;
+    flex-direction: row;
+}
+.notebook-title {
+    font-size: 20px; 
+    margin-left:10px;
+}
+.notebook-list-item {
+    height: 60px;
+    display: flex;    
+}
+.notebook-list-item:hover {
+    background-color: #1d1d1d;
+    cursor: pointer;
+}
+.notebook-metadata {
+    flex: 1;
+    align-items: center;
+    display: flex;
+    margin-left: 5px;
+}

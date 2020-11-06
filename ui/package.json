@@ -31,6 +31,7 @@
     "angular2-uuid": "^1.1.1",
     "core-js": "^2.6.11",
     "diff2html": "2.7.0",
+    "feather-icons": "^4.28.0",
     "jwt-decode": "^2.2.0",
     "monaco-editor": "^0.15.6",
     "ngx-malihu-scrollbar": "^8.0.0",
@@ -42,7 +43,7 @@
     "zone.js": "~0.9.1"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^0.803.21",
+    "@angular-devkit/build-angular": "^0.1002.0",
     "@angular/cli": "^8.3.21",
     "@angular/compiler-cli": "^8.2.14",
     "@angular/language-service": "^8.2.14",

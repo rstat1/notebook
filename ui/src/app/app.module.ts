@@ -1,12 +1,15 @@
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FeatherModule } from 'angular-feather';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterModule, Routes } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
-import { MatButtonModule, MatInputModule } from '@angular/material';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatButtonModule, MatInputModule, MatIconModule, MatTooltipModule } from '@angular/material';
+
+import { List, Trash2, FilePlus, Sliders } from 'angular-feather/icons';
 
 import { MenuModule } from 'app/menu/menu.module';
 import { NotesModule } from 'app/notes/notes.module';
@@ -24,16 +27,18 @@ import { MenuService } from 'app/services/menu.service';
 import { APIService } from 'app/services/api/api.service';
 import { EventService } from 'app/services/event.service';
 import { AuthService } from 'app/services/auth/auth.service';
-import { GraphQLService } from 'app/services/graphql.service';
 import { HeaderInfoService } from 'app/services/header-info.service';
 import { CommandListService } from 'app/components/command-list/command-list.service';
+import { NotebookListItemComponent } from './components/notebook-list-item/notebook-list-item.component';
+
+const icons = { FilePlus, Trash2, List, Sliders };
 
 const appRoutes: Routes = [
 	{ path: 'auth', component: AuthComponent, pathMatch: "full" },
-	{ path: 'home', redirectTo: "/notes", canActivate: [AuthGuard] },
+	{ path: 'home', component: Home, canActivate: [AuthGuard] },
 	{ path: 'notes', loadChildren: () => import('app/notes/notes.module').then(m => m.NotesModule), canActivate: [AuthGuard] },
 	{ path: 'settings', loadChildren: () => import('app/admin/admin.module').then(m => m.AdminModule), canActivate: [RootGuard] },
-	{ path: '', redirectTo: "/notes", pathMatch: 'full' }
+	{ path: '', component: Home, canActivate: [AuthGuard], pathMatch: 'full' }
 ];
 
 const appMenuItems = {
@@ -61,6 +66,7 @@ const appMenuItems = {
 		AuthComponent,
 		CommandListItem,
 		CommandListComponent,
+		NotebookListItemComponent,
 	],
 	imports: [
 		FormsModule,
@@ -69,15 +75,18 @@ const appMenuItems = {
 		CommonModule,
 		OverlayModule,
 		BrowserModule,
+		MatIconModule,
 		MatInputModule,
 		MatButtonModule,
+		MatTooltipModule,
 		HttpClientModule,
 		BrowserAnimationsModule,
+		FeatherModule.pick(icons),
 		MalihuScrollbarModule.forRoot(),
 		MenuModule.forRoot(appMenuItems),
 		RouterModule.forRoot(appRoutes, { enableTracing: false })
 	],
-	providers: [AuthService, APIService, AuthGuard, GraphQLService, HeaderInfoService, { provide: HTTP_INTERCEPTORS, multi: true, useClass: AuthTokenInjector },
+	providers: [AuthService, APIService, AuthGuard, HeaderInfoService, { provide: HTTP_INTERCEPTORS, multi: true, useClass: AuthTokenInjector },
 		MenuService, RootGuard, EventService, CommandListService],
 	bootstrap: [AppComponent],
 	entryComponents: [CommandListComponent]

@@ -71,7 +71,7 @@ export function markedOptionsFactory(): MarkedOptions {
 		BlockListItemComponent,
 		MarkdownBlockComponent,
 		MarkdownEditorComponent,
-		PlaceholderBlockComponent,		
+		PlaceholderBlockComponent,
 	],
 	imports: [
 		MenuModule,

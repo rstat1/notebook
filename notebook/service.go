@@ -46,7 +46,7 @@ func (notesAPI *ServiceAPI) GetNotebooks(username string) ([]data.NotebookRefere
 
 //NewPage ...
 func (notesAPI *ServiceAPI) NewPage(page data.NewPageRequest) error {
-	content, err := base64.StdEncoding.DecodeString(page.ContentAsBase64)
+	content, err := base64.RawURLEncoding.DecodeString(page.ContentAsBase64)
 	if err != nil {
 		return err
 	}

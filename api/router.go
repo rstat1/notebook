@@ -97,17 +97,12 @@ func (api *Routes) authcode(resp http.ResponseWriter, r *http.Request) {
 }
 func (api *Routes) apikeys(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "admin:apikey") {
-		body, _ := ioutil.ReadAll(r.Body)
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
-			if username != string(body) {
-				common.WriteFailureResponse(errors.New("forbidden"), resp, "apikeys", 403)
+			keys, err := api.data.GetAPIKeys(username)
+			if err != nil {
+				common.WriteFailureResponse(err, resp, "apikeys", 400)
 			} else {
-				keys, err := api.data.GetAPIKeys(username)
-				if err != nil {
-					common.WriteFailureResponse(err, resp, "apikeys", 400)
-				} else {
-					common.WriteAPIResponseStruct(resp, common.CreateAPIRespFromObject(keys, nil, 200))
-				}
+				common.WriteAPIResponseStruct(resp, common.CreateAPIRespFromObject(keys, nil, 200))
 			}
 		} else {
 			common.WriteFailureResponse(err, resp, "apikeys", 400)
@@ -197,7 +192,7 @@ func (api *Routes) newnotebook(resp http.ResponseWriter, r *http.Request) {
 
 func (api *Routes) pages(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "notebook:read") {
-		pages, err := api.notebookSvc.GetPages(r.URL.Query().Get("nbid"))
+		pages, err := api.notebookSvc.GetPages(vestigo.Param(r, "nbid"))
 		common.WriteResponse(resp, 400, pages, err)
 	} else {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "pages", 401)

@@ -1,30 +1,22 @@
-<div class="block-container" style="margin-left:64px;margin-right:64px;">
-	<div id="background-color" class="login-block">
-		<div class="app-name">
-			<img class="app-img" src="/assets/module-large.png" />
-			<p>Welcome, {{authService.getUsername()}}.</p>
-		</div>
+<div class="block-container">
+	<div class="login-block">
 		<div class="search-cmd-box">
-			<input class="search-box" type="text" placeholder="Enter a search term or specify a direct path (eg. /devcentral/projects/devapp)." />
-			<button type="submit" id="button-style" mat-raised-button color="primary">go</button>
+			<input class="search-box" type="text" placeholder="Type here to filter the list" />
 		</div>
+		<div class="app-name">{{authService.getUsername()}}'s Notebooks</div>
+		<span style="display:block;height:660px;margin-top:32px;margin-bottom:32px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
+			<div class="item-grid">
+				<notebook-list-item [title]="notebook.name" *ngFor="let notebook of notebooks"></notebook-list-item>				
+			</div>
+		</span>
+			
 		<div class="nav-links">
-			<a class="nav-link" routerLink="/settings" style="margin-right:30px;">
-				<img src="/assets/settings.png" />
-				<p>Admin</p>
-			</a>
-			<a routerLink="/projects" class="nav-link" style="margin-right:30px;">
-				<img src="/assets/projects.png" />
-				<p>Projects</p>
-			</a>
-			<a routerLink="/wiki" class="nav-link" style="margin-right:30px;">
-				<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" x="0px" y="0px" viewBox="0 0 50 50" class="wiki-icon"><g id="surface1"><path style=" " d="M 30.398438 2 L 7 2 L 7 48 L 43 48 L 43 14.601563 Z M 15 28 L 31 28 L 31 30 L 15 30 Z M 35 36 L 15 36 L 15 34 L 35 34 Z M 35 24 L 15 24 L 15 22 L 35 22 Z M 30 15 L 30 4.398438 L 40.601563 15 Z "></path></g></svg>
-				<p>Wiki</p>
-			</a>
-			<a class="nav-link" routerLink="/builds" >
-				<img src="/assets/builds.png" />
-				<p>Builds</p>
-			</a>
+			<button mat-icon-button matTooltip="Admin" matTooltipPosition="right" class="nav-link-button" color="white">
+				<mat-icon class="icon" svgIcon="feather_sliders"></mat-icon>
+			</button>
+			<button mat-icon-button matTooltip="New Notebook" matTooltipPosition="right" class="nav-link-button" color="white">
+				<mat-icon class="icon" svgIcon="feather_plus"></mat-icon>
+			</button>
 		</div>
 	</div>
 </div>

@@ -49,8 +49,8 @@ export class ConfigService {
 			ConfigService.API_ENDPOINT = protocol + "//" + "api" + domain;
 			ConfigService.AUTH_ENDPOINT = ConfigService.API_ENDPOINT + "/trinity/";
 		} else {
-			ConfigService.API_ENDPOINT = protocol + "//api.frost.m";
-			ConfigService.AUTH_ENDPOINT = "http://api.frost.m/trinity/";
+			ConfigService.API_ENDPOINT = protocol + "//api.frostdev.m";
+			ConfigService.AUTH_ENDPOINT = "http://api.frostdev.m/trinity/";
 		}
 	}
 }

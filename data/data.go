@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 //DataStore ...
@@ -53,6 +54,9 @@ func (data *DataStore) ConnectToMongoDB() error {
 
 //NewPage ...
 func (data *DataStore) NewPage(page Page, notebookID string) error {
+	if err := data.checkConnection(); err != nil {
+		return err
+	}
 	if inserted, err := data.insertUniqueItem("pages", page, bson.M{"title": page.Title}); err == nil {
 		if inserted {
 			pageRef := PageReference{ID: page.ID, Tags: page.Tags, Title: page.Title}
@@ -76,6 +80,9 @@ func (data *DataStore) NewPage(page Page, notebookID string) error {
 
 //NewTag ...
 func (data *DataStore) NewTag(tag PageTag) error {
+	if err := data.checkConnection(); err != nil {
+		return err
+	}
 	inserted, err := data.insertUniqueItem("tags", tag, bson.M{"tagvalue": tag.TagValue})
 	if !inserted {
 		return errors.New("this tag already exists")
@@ -89,6 +96,9 @@ func (data *DataStore) NewTag(tag PageTag) error {
 
 //NewNotebook ...
 func (data *DataStore) NewNotebook(notebook Notebook) error {
+	if err := data.checkConnection(); err != nil {
+		return err
+	}
 	inserted, err := data.insertUniqueItem("notebooks", notebook, bson.M{"name": notebook.Name})
 	if !inserted {
 		return errors.New("this notebook already exists")
@@ -98,6 +108,9 @@ func (data *DataStore) NewNotebook(notebook Notebook) error {
 
 //NewAPIKey ...
 func (data *DataStore) NewAPIKey(keyRequest NewAPIKeyRequest) (key NewAPIKeyResponse, err error) {
+	if err := data.checkConnection(); err != nil {
+		return NewAPIKeyResponse{}, err
+	}
 	var b [20]byte
 	var apiKey UserAPIKey
 
@@ -124,6 +137,9 @@ func (data *DataStore) NewAPIKey(keyRequest NewAPIKeyRequest) (key NewAPIKeyResp
 
 //AddTagToPage ...
 func (data *DataStore) AddTagToPage(tag string, pageID int) (string, error) {
+	if err := data.checkConnection(); err != nil {
+		return "", err
+	}
 	r, err := data.db.Collection("pages", nil).UpdateOne(context.Background(), bson.M{"id": pageID}, bson.M{"$push": bson.M{"tags": tag}}, &options.UpdateOptions{})
 	if r.ModifiedCount == 0 && err == nil {
 		return "not modified", nil
@@ -138,22 +154,24 @@ func (data *DataStore) AddTagToPage(tag string, pageID int) (string, error) {
 
 //GetContentsOfNotebook ...
 func (data *DataStore) GetContentsOfNotebook(notebookID string) (pageRefs []PageReference, e error) {
-	var pageRef PageReference
-	if result, err := data.db.Collection("pages", nil).Find(context.Background(), bson.M{"id": notebookID}, &options.FindOptions{}); err == nil {
-		for result.Next(context.Background()) {
-			if err = common.LogError("GetAPIKey(decode)", result.Decode(&pageRef)); err != nil {
-				return nil, err
-			}
-			pageRefs = append(pageRefs, pageRef)
-		}
+	if err := data.checkConnection(); err != nil {
+		return nil, err
+	}
+	var pageRefMap map[string][]PageReference
+	projection := bson.D{{"pages", 1}, {"_id", 0}}
+	result := data.db.Collection("notebooks", nil).FindOne(context.Background(), bson.M{"id": notebookID}, options.FindOne().SetProjection(projection))
+	if err := common.LogError("GetContentsOfNotebook(decode)", result.Decode(&pageRefMap)); err == nil {
+		return pageRefMap["pages"], nil //, nil
 	} else {
 		return nil, err
 	}
-	return pageRefs, nil
 }
 
 //GetPageTags ...
 func (data *DataStore) GetPageTags(pageID string) (tags []PageTag, e error) {
+	if err := data.checkConnection(); err != nil {
+		return nil, err
+	}
 	projection := bson.D{{"tags", 1}, {"_id", 0}}
 	result := data.db.Collection("pages", nil).FindOne(context.Background(), bson.M{"id": pageID}, options.FindOne().SetProjection(projection))
 	e = common.LogError("", result.Decode(&tags))
@@ -162,6 +180,9 @@ func (data *DataStore) GetPageTags(pageID string) (tags []PageTag, e error) {
 
 //GetPageByID ...
 func (data *DataStore) GetPageByID(pageID string) (page Page, e error) {
+	if err := data.checkConnection(); err != nil {
+		return Page{}, err
+	}
 	projection := bson.D{{"_id", 0}}
 	result := data.db.Collection("pages", nil).FindOne(context.Background(), bson.M{"id": pageID}, options.FindOne().SetProjection(projection))
 	e = common.LogError("", result.Decode(&page))
@@ -170,6 +191,9 @@ func (data *DataStore) GetPageByID(pageID string) (page Page, e error) {
 
 //GetPagesWithTags Returns pagerefs of docs matching the 'tag(s)' specified
 func (data *DataStore) GetPagesWithTags(tags []string) (pageRefs []PageReference, err error) {
+	if err := data.checkConnection(); err != nil {
+		return nil, err
+	}
 	var pageRef PageReference
 	projection := bson.D{{"id", 1}, {"title", 1}, {"tags", 1}, {"_id", 0}}
 	r, e := data.db.Collection("pages", nil).Find(context.Background(), bson.M{"tags": bson.M{"$in": tags}}, options.Find().SetProjection(projection))
@@ -184,6 +208,9 @@ func (data *DataStore) GetPagesWithTags(tags []string) (pageRefs []PageReference
 
 //GetAPIKey ...
 func (data *DataStore) GetAPIKey(keyHash string) (key UserAPIKey, err error) {
+	if err := data.checkConnection(); err != nil {
+		return UserAPIKey{}, err
+	}
 	projection := bson.D{{"_id", 0}}
 	result := data.db.Collection("apikeys", nil).FindOne(context.Background(), bson.M{"hash": keyHash}, options.FindOne().SetProjection(projection))
 	err = result.Decode(&key)
@@ -192,12 +219,16 @@ func (data *DataStore) GetAPIKey(keyHash string) (key UserAPIKey, err error) {
 
 //GetAPIKeys ...
 func (data *DataStore) GetAPIKeys(username string) (keys []UserAPIKey, err error) {
+	if err := data.checkConnection(); err != nil {
+		return nil, err
+	}
 	var apiKey UserAPIKey
 	if result, err := data.db.Collection("apikeys", nil).Find(context.Background(), bson.M{}, &options.FindOptions{}); err == nil {
 		for result.Next(context.Background()) {
 			if err = common.LogError("GetAPIKey(decode)", result.Decode(&apiKey)); err != nil {
 				return nil, err
 			}
+			apiKey.Hash = ""
 			keys = append(keys, apiKey)
 		}
 	} else {
@@ -208,14 +239,19 @@ func (data *DataStore) GetAPIKeys(username string) (keys []UserAPIKey, err error
 
 //GetUserNotebookNames ...
 func (data *DataStore) GetUserNotebookNames(username string) (names []NotebookReference, err error) {
+	if err := data.checkConnection(); err != nil {
+		return nil, err
+	}
 	var nameList map[string]string
 	projection := bson.D{{"name", 1}, {"id", 1}, {"_id", 0}}
 	r, e := data.db.Collection("notebooks", nil).Find(context.Background(), bson.M{"owner": username}, options.Find().SetProjection(projection))
+	if e != nil {
+		return nil, e
+	}
 	for r.Next(context.Background()) {
 		if err = common.LogError("GetUserNotebookNames(decode)", r.Decode(&nameList)); err != nil {
 			return nil, err
 		}
-		common.LogDebug("list", nameList, "")
 		names = append(names, NotebookReference{Name: nameList["name"], ID: nameList["id"]})
 	}
 	return names, e
@@ -223,6 +259,9 @@ func (data *DataStore) GetUserNotebookNames(username string) (names []NotebookRe
 
 //GetPageCreator ...
 func (data *DataStore) GetPageCreator(pageID string) (name string, e error) {
+	if err := data.checkConnection(); err != nil {
+		return "", err
+	}
 	var creator map[string]string
 	projection := bson.D{{"creator", 1}, {"_id", 0}}
 	result := data.db.Collection("pages", nil).FindOne(context.Background(), bson.M{"id": pageID}, options.FindOne().SetProjection(projection))
@@ -232,6 +271,9 @@ func (data *DataStore) GetPageCreator(pageID string) (name string, e error) {
 
 //GetTags ...
 func (data *DataStore) GetTags() (tags []PageTag, e error) {
+	if err := data.checkConnection(); err != nil {
+		return nil, err
+	}
 	if tagJSON := data.Cache.GetString("notescache", "tags"); tagJSON != "" {
 		json.Unmarshal([]byte(tagJSON), &tags)
 		return tags, nil
@@ -252,6 +294,9 @@ func (data *DataStore) GetTags() (tags []PageTag, e error) {
 
 //DeleteAPIKey ...
 func (data *DataStore) DeleteAPIKey(id string) error {
+	if err := data.checkConnection(); err != nil {
+		return err
+	}
 	r, err := data.db.Collection("apikeys", nil).DeleteOne(context.Background(), bson.M{"id": id}, &options.DeleteOptions{})
 	if r.DeletedCount == 0 {
 		return errors.New("provided key ID was invalid")
@@ -262,6 +307,9 @@ func (data *DataStore) DeleteAPIKey(id string) error {
 
 //DeletePage Deletes the Page with the ID specified.
 func (data *DataStore) DeletePage(pageID, notebookID string) error {
+	if err := data.checkConnection(); err != nil {
+		return err
+	}
 	r, err := data.db.Collection("pages", nil).DeleteOne(context.Background(), bson.M{"id": pageID}, &options.DeleteOptions{})
 	if r.DeletedCount == 0 {
 		return errors.New("page id " + pageID + " not found")
@@ -283,6 +331,9 @@ func (data *DataStore) DeletePage(pageID, notebookID string) error {
 
 //DeleteTag Deletes a tag that has no assigned docs. If this function is called on with a tagid that is in active use an error is returned.
 func (data *DataStore) DeleteTag(tagID string) error {
+	if err := data.checkConnection(); err != nil {
+		return err
+	}
 	if result, err := data.db.Collection("pages", nil).CountDocuments(context.Background(), bson.M{"tags": tagID}, &options.CountOptions{}); err == nil {
 		if result > 0 {
 			return errors.New("this tag is still assigned to pages in a notebook")
@@ -301,6 +352,9 @@ func (data *DataStore) DeleteTag(tagID string) error {
 
 //DeleteNotebook ...
 func (data *DataStore) DeleteNotebook(id string) ([]PageReference, error) {
+	if err := data.checkConnection(); err != nil {
+		return nil, err
+	}
 	common.LogDebug("id", id, "delete id")
 	var notebook Notebook
 	r := data.db.Collection("notebooks", nil).FindOne(context.Background(), bson.M{"id": id}, &options.FindOneOptions{})
@@ -328,6 +382,9 @@ func (data *DataStore) DeleteNotebook(id string) ([]PageReference, error) {
 
 //UpdatePage ...
 func (data *DataStore) UpdatePage(pageID string, key string, value interface{}) (string, error) {
+	if err := data.checkConnection(); err != nil {
+		return "", err
+	}
 	r, err := data.db.Collection("pages", nil).UpdateOne(context.Background(), bson.M{"id": pageID}, bson.M{"$set": bson.M{key: value}}, &options.UpdateOptions{})
 	if r.ModifiedCount == 0 && err == nil {
 		return "not modified", nil
@@ -357,4 +414,12 @@ func (data *DataStore) insertItem(collectionName string, item interface{}) (bool
 		return false, err
 	}
 	return true, nil
+}
+func (data *DataStore) checkConnection() error {
+	if err := data.mongo.Ping(context.Background(), &readpref.ReadPref{}); err != nil {
+		if err := data.ConnectToMongoDB(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
