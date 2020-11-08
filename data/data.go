@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -48,6 +47,19 @@ func (data *DataStore) ConnectToMongoDB() error {
 		} else {
 			return err
 		}
+	}
+	return nil
+}
+
+//Transaction ...
+func (data *DataStore) Transaction(cb func(sessCtx mongo.SessionContext) (interface{}, error)) error {
+	session, err := data.mongo.StartSession()
+	if err != nil {
+		return common.LogError("", err)
+	}
+	defer session.EndSession(context.Background())
+	if _, err := session.WithTransaction(context.Background(), cb); err != nil {
+		return err
 	}
 	return nil
 }
@@ -274,21 +286,36 @@ func (data *DataStore) GetTags() (tags []PageTag, e error) {
 	if err := data.checkConnection(); err != nil {
 		return nil, err
 	}
-	if tagJSON := data.Cache.GetString("notescache", "tags"); tagJSON != "" {
-		json.Unmarshal([]byte(tagJSON), &tags)
-		return tags, nil
-	} else {
-		var tag PageTag
-		projection := bson.D{{"_id", 0}}
-		r, e := data.db.Collection("tags", nil).Find(context.Background(), bson.M{}, options.Find().SetProjection(projection))
-		for r.Next(context.Background()) {
-			if e = common.LogError("", r.Decode(&tag)); e != nil {
-				return nil, e
-			}
-			tags = append(tags, tag)
+
+	var tag PageTag
+	projection := bson.D{{"_id", 0}}
+	r, e := data.db.Collection("tags", nil).Find(context.Background(), bson.M{}, options.Find().SetProjection(projection))
+	for r.Next(context.Background()) {
+		if e = common.LogError("", r.Decode(&tag)); e != nil {
+			return nil, e
 		}
-		data.Cache.PutObject("notescache", "tags", tags)
-		return tags, e
+		tags = append(tags, tag)
+	}
+
+	return tags, e
+
+}
+
+//IsValidTagID Returns true if the provided tag IDs both exist and were created by the provided username
+func (data *DataStore) IsValidTagID(ids []string, username string) (bool, error) {
+	if err := data.checkConnection(); err != nil {
+		return false, err
+	}
+	common.LogDebug("username", username, "")
+	projection := bson.D{{"_id", 0}}
+	result := data.db.Collection("tags", nil).FindOne(context.Background(), bson.D{
+		{"creator", username}, {"tagid", bson.D{{"$in", ids}}}}, options.FindOne().SetProjection(projection))
+	if result.Err() == mongo.ErrNoDocuments {
+		return false, nil
+	} else if result.Err() != nil {
+		return false, result.Err()
+	} else {
+		return true, nil
 	}
 }
 
@@ -338,7 +365,7 @@ func (data *DataStore) DeleteTag(tagID string) error {
 		if result > 0 {
 			return errors.New("this tag is still assigned to pages in a notebook")
 		} else {
-			_, err := data.db.Collection("tags", nil).DeleteOne(context.Background(), bson.M{"id": tagID}, &options.DeleteOptions{})
+			_, err := data.db.Collection("tags", nil).DeleteOne(context.Background(), bson.M{"tagid": tagID}, &options.DeleteOptions{})
 			if err == nil {
 				data.Cache.DeleteString("notescache", "tags")
 				return nil
@@ -385,6 +412,11 @@ func (data *DataStore) UpdatePage(pageID string, key string, value interface{}) 
 	if err := data.checkConnection(); err != nil {
 		return "", err
 	}
+
+	if key == "tags" {
+		//TODO: Validate tags
+	}
+
 	r, err := data.db.Collection("pages", nil).UpdateOne(context.Background(), bson.M{"id": pageID}, bson.M{"$set": bson.M{key: value}}, &options.UpdateOptions{})
 	if r.ModifiedCount == 0 && err == nil {
 		return "not modified", nil
@@ -417,7 +449,11 @@ func (data *DataStore) insertItem(collectionName string, item interface{}) (bool
 }
 func (data *DataStore) checkConnection() error {
 	if err := data.mongo.Ping(context.Background(), &readpref.ReadPref{}); err != nil {
-		if err := data.ConnectToMongoDB(); err != nil {
+		if err == mongo.ErrClientDisconnected {
+			if err := data.ConnectToMongoDB(); err != nil {
+				return err
+			}
+		} else {
 			return err
 		}
 	}

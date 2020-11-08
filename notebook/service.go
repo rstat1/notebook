@@ -3,6 +3,7 @@ package notebook
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 
@@ -10,6 +11,7 @@ import (
 	"go.alargerobot.dev/notebook/common"
 	"go.alargerobot.dev/notebook/crypto"
 	"go.alargerobot.dev/notebook/data"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 //ServiceAPI ...
@@ -46,45 +48,31 @@ func (notesAPI *ServiceAPI) GetNotebooks(username string) ([]data.NotebookRefere
 
 //NewPage ...
 func (notesAPI *ServiceAPI) NewPage(page data.NewPageRequest) error {
-	content, err := base64.RawURLEncoding.DecodeString(page.ContentAsBase64)
-	if err != nil {
-		return err
-	}
-
-	//TODO: Validate tags
-
-	if err := notesAPI.data.NewPage(page.Metadata, page.NotebookID); err != nil {
-		return err
-	}
-
-	wd, _ := os.Getwd()
-	path := wd + "/notebooks/" + page.NotebookID + "/" + page.Metadata.ID
-
-	if vKey, vSealed, err := notesAPI.vaultClient.GenerateKey("notebook", crypto.Context{"pageID": page.Metadata.ID}); err == nil {
-		cryptoKey := crypto.GenerateKey(vKey[:], "notes/"+page.NotebookID+"/"+page.Metadata.ID)
-		sealed, _ := cryptoKey.Seal(vKey[:], page.NotebookID+"/"+page.Metadata.ID)
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0600)
-		if err != nil {
-			return err
+	transactionCB := func(sessCtx mongo.SessionContext) (interface{}, error) {
+		if valid, e := notesAPI.data.IsValidTagID(page.Metadata.Tags, page.Metadata.Creator); e != nil {
+			return nil, common.LogError("", e)
+		} else if valid == false {
+			return nil, common.LogError("", errors.New("One or more of the specified tags is invalid"))
 		}
-		if encryptedWriter, err := sio.EncryptWriter(file, sio.Config{Key: cryptoKey[:], MinVersion: sio.Version20}); err == nil {
-			encryptedWriter.Write([]byte(content))
-			if err = encryptedWriter.Close(); err != nil {
-				return err
-			}
-			entryCryptoKey := crypto.PageEncryptionKey{EntryKey: sealed, SealedMasterKey: vSealed}
-			ecKey, _ := json.Marshal(entryCryptoKey)
-			if e := notesAPI.vaultClient.WriteKeyToKVStorage(string(ecKey), page.NotebookID+"/"+page.Metadata.ID); e != nil {
-				return e
-			}
+
+		if err := notesAPI.data.NewPage(page.Metadata, page.NotebookID); err != nil {
+			return nil, common.LogError("", err)
+		}
+		
+		if err := notesAPI.writePageContentToDisk(page.ContentAsBase64, page.Metadata.ID, page.NotebookID); err != nil {
+			return nil, common.LogError("", err)
+		}
+		return nil, nil
+	}
+	if err := notesAPI.data.Transaction(transactionCB); err != nil {
+		if e := notesAPI.vaultClient.DeleteKeyFromKV(page.NotebookID + "/" + page.Metadata.ID); e != nil {
+			return common.LogError("", e)
 		} else {
-			return err
+			return common.LogError("", err)
 		}
-		file.Close()
 	} else {
-		return err
+		return nil
 	}
-	return nil
 }
 
 //ReadPage ...
@@ -149,4 +137,42 @@ func (notesAPI *ServiceAPI) DeleteNotebook(id string) error {
 	} else {
 		return common.LogError("", err)
 	}
+}
+
+func (notesAPI *ServiceAPI) writePageContentToDisk(pageContent, pageID, notebookID string) error {
+	wd, _ := os.Getwd()
+	path := wd + "/notebooks/" + notebookID + "/" + pageID
+	content, err := base64.RawURLEncoding.DecodeString(pageContent)
+	if err != nil {
+		return err
+	}
+	if vKey, vSealed, err := notesAPI.vaultClient.GenerateKey("notebook", crypto.Context{"pageID": pageID}); err == nil {
+		cryptoKey := crypto.GenerateKey(vKey[:], "notes/"+notebookID+"/"+pageID)
+		sealed, _ := cryptoKey.Seal(vKey[:], notebookID+"/"+pageID)
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			return err
+		}
+		if encryptedWriter, err := sio.EncryptWriter(file, sio.Config{Key: cryptoKey[:], MinVersion: sio.Version20}); err == nil {
+			encryptedWriter.Write([]byte(content))
+			if err = encryptedWriter.Close(); err != nil {
+				os.Remove(path)
+				file.Close()
+				return err
+			}
+			entryCryptoKey := crypto.PageEncryptionKey{EntryKey: sealed, SealedMasterKey: vSealed}
+			ecKey, _ := json.Marshal(entryCryptoKey)
+			if e := notesAPI.vaultClient.WriteKeyToKVStorage(string(ecKey), notebookID+"/"+pageID); e != nil {
+				file.Close()
+				os.Remove(path)
+				return e
+			}
+		} else {
+			return err
+		}
+		file.Close()
+	} else {
+		return err
+	}
+	return nil
 }

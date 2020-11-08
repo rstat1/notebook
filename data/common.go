@@ -99,5 +99,6 @@ type NotebookReference struct {
 //PageTag ...
 type PageTag struct {
 	TagID    string `json:"tagId"`
+	Creator  string `json:"creator"`
 	TagValue string `json:"tagValue"`
 }

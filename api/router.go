@@ -275,7 +275,11 @@ func (api *Routes) gettags(resp http.ResponseWriter, r *http.Request) {
 func (api *Routes) newtag(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "tags") {
 		body, _ := ioutil.ReadAll(r.Body)
-		common.WriteResponse(resp, 400, nil, api.data.NewTag(data.PageTag{TagID: uuid.New().String(), TagValue: string(body)}))
+		if username, err := api.user.GetUsernameFromToken(r); err == nil {
+			common.WriteResponse(resp, 400, nil, api.data.NewTag(data.PageTag{TagID: uuid.New().String(), TagValue: string(body), Creator: username}))
+		} else {
+			common.WriteFailureResponse(err, resp, "newpage", 400)
+		}
 	} else {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "newtag", 401)
 	}
@@ -287,7 +291,6 @@ func (api *Routes) deletetag(resp http.ResponseWriter, r *http.Request) {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "newtag", 401)
 	}
 }
-
 func (api *Routes) isAccessAllowed(r *http.Request) (bool, error) {
 	if username, err := api.user.GetUsernameFromToken(r); err == nil {
 		if creator, err := api.data.GetPageCreator(vestigo.Param(r, "id")); err == nil {
