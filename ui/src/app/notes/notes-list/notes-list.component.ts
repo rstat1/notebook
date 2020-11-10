@@ -138,7 +138,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.router.navigate(["nb/" + notebook.id]);
 	}
 	public noteClicked(id: string) {
-		this.router.navigate(["page", id])
+		this.router.navigate(["page", id], { relativeTo: this.route });
 	}
 	public getInitials(projectName: string) {
 		return projectName.substring(0, 2);

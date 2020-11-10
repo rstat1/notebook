@@ -67,10 +67,7 @@
 								<i-feather class="md-icon" name="tag" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
 								<mat-basic-chip style="display: flex;" class="status-chip-list-item" *ngFor="let t of note.tags">
 									<span style="margin-top:1px;">{{getTagValue(t)}}</span>
-								</mat-basic-chip>
-								<mat-basic-chip style="display: flex;" class="status-chip-list-item">
-									<span style="margin-top:1px;">other-tag</span>
-								</mat-basic-chip>
+								</mat-basic-chip>								
 							</mat-chip-list>
 							<mat-chip-list class="chip-list chip-list-list-item">
 								<i-feather class="md-icon" name="clock" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
@@ -83,8 +80,10 @@
 				</div>
 			</div>
 		</div>
-		<div *ngIf="this.activePage != null">			
-			<div style="margin-left: 10px;">{{this.pageContent}}</div>
+		<div style="background-color: #424242;" *ngIf="this.activePage != null">
+			<div style="margin: 20px;max-width: 59vw;">
+				<markdown ngPreserveWhitespaces class="task-description"  [data]="this.pageContent"></markdown>
+			</div>
 		</div>
 	</div>
 </div>
