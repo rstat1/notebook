@@ -1,16 +1,15 @@
 .initials {
     display: inline-block;
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
-    border-radius: 50%;
     color: white;
     background-color: #A83D3E;
     padding-top: 10px;
     text-align: center;
     text-transform: uppercase;
     background-size: cover;
-    font-size: 18pt;
+    font-size: 14pt;
     cursor: pointer;
 }
 .actions-bar {
@@ -29,10 +28,11 @@
     display: flex;
     margin-top: 4px;
     margin-left: 8px;
+    margin-right:5px;
     flex-direction: row;
 }
 .notebook-title {
-    font-size: 20px; 
+    font-size: 14px; 
     margin-left:10px;
 }
 .notebook-list-item {
@@ -40,7 +40,7 @@
     display: flex;    
 }
 .notebook-list-item:hover {
-    background-color: #1d1d1d;
+    background-color: #2e2e2e;
     cursor: pointer;
 }
 .notebook-metadata {
@@ -48,4 +48,7 @@
     align-items: center;
     display: flex;
     margin-left: 5px;
+}
+.selected {
+    background-color: #2e2e2e;
 }

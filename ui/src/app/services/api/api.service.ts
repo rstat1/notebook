@@ -41,6 +41,12 @@ export class APIService {
 	public GetTags(): Observable<APIResponse> {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("tags"));
 	}
+	public GetPageMetadata(pageID: string, notebookID: string): Observable<APIResponse> {
+		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/page/" + pageID));
+	}
+	public GetPageContent(pageID: string, notebookID: string): Observable<APIResponse> {
+		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/page/" + pageID + "/content"));
+	}
 	public GetPages(notebookID: string): Observable<APIResponse> {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID));
 	}

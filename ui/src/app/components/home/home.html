@@ -6,7 +6,7 @@
 		<div class="app-name">{{authService.getUsername()}}'s Notebooks</div>
 		<span style="display:block;height:660px;margin-top:32px;margin-bottom:32px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
 			<div class="item-grid">
-				<notebook-list-item [title]="notebook.name" *ngFor="let notebook of notebooks"></notebook-list-item>				
+				<notebook-list-item (click)="this.navToNotebook(notebook)" [title]="notebook.name" *ngFor="let notebook of notebooks"></notebook-list-item>				
 			</div>
 		</span>
 			

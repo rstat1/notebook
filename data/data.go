@@ -18,10 +18,11 @@ import (
 
 //DataStore ...
 type DataStore struct {
-	Cache *CacheService
-	mongo *mongo.Client
-	db    *mongo.Database
-	vault *crypto.VaultKMS
+	Cache           *CacheService
+	mongo           *mongo.Client
+	db              *mongo.Database
+	vault           *crypto.VaultKMS
+	stopCredRefresh bool
 }
 
 //NewDataStore ...
@@ -43,23 +44,11 @@ func (data *DataStore) ConnectToMongoDB() error {
 				return err
 			}
 			data.mongo = mongoClient
+			data.dbCredentialRefresh()
 			data.db = data.mongo.Database(common.CurrentConfig.DBName, nil)
 		} else {
 			return err
 		}
-	}
-	return nil
-}
-
-//Transaction ...
-func (data *DataStore) Transaction(cb func(sessCtx mongo.SessionContext) (interface{}, error)) error {
-	session, err := data.mongo.StartSession()
-	if err != nil {
-		return common.LogError("", err)
-	}
-	defer session.EndSession(context.Background())
-	if _, err := session.WithTransaction(context.Background(), cb); err != nil {
-		return err
 	}
 	return nil
 }
@@ -458,4 +447,26 @@ func (data *DataStore) checkConnection() error {
 		}
 	}
 	return nil
+}
+func (data *DataStore) dbCredentialRefresh() {
+	go func() {
+		for {
+			if !data.stopCredRefresh {
+				select {
+				case <-time.After(1 * time.Hour):
+					var result ConnectionStatus
+					var command bson.D
+					command = bson.D{{"connectionStatus", 1}}
+					r := data.db.RunCommand(context.Background(), command)
+					r.Decode(&result)
+					if result.AuthInfo.AuthenticatedUsers == nil {
+						data.mongo.Disconnect(context.Background())
+						common.LogError("", data.ConnectToMongoDB())
+					}
+				}
+			} else {
+				break
+			}
+		}
+	}()
 }

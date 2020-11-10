@@ -2,12 +2,11 @@
 	outline: none;
 }
 .notes-page-root {
-	flex: 2;
-    /* padding: 30px 50px; */
-    background-color: #2e2e2e;
-    height: 100%;
-	/* margin: 0px 100px 0px 100px; */
+	flex: 2;    
+	height: 100%;	
+	width:410px;
 	margin:0px 69.3% 0px 0px;
+    background-color: #2e2e2e;
 }
 .page-width {
 	width: 100%;
@@ -34,6 +33,27 @@
 .note-content {
 	margin: 40px 10vh 40px 10vh;
 }
+.notebook-menu {
+	background-color: #1d1d1d;
+    height: 100vh;
+    position: fixed;
+    margin-left: 60px;
+    z-index: 1;
+    width: 350px;
+}
+.notebook-menu-collapsed {
+	width: 70px;
+	margin-left: 0px;
+    position: unset;
+    overflow: hidden;
+}
+.notebook-list {
+	padding: 20px;	
+}
+.notebook-list-collapsed {
+	filter: grayscale(1);
+    opacity: 50%;
+}
 .content-block {
 
 }
@@ -55,4 +75,16 @@
 .initial-block:hover {
 	border: 2px #464646 dashed;
 	background-color: #464646;
+}
+.icon {
+    fill: none;
+    stroke: #98959A;
+	stroke-width: 2px;
+	width: 32px;
+	height:32px;
+	display:block; 
+	margin:0px auto;
+}
+.icon:hover {
+	stroke: #A83D3E;
 }

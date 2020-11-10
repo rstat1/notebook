@@ -102,3 +102,27 @@ type PageTag struct {
 	Creator  string `json:"creator"`
 	TagValue string `json:"tagValue"`
 }
+
+//ConnectionStatus ...
+type ConnectionStatus struct {
+	AuthInfo AuthInfo `json:"authInfo"`
+	Ok       int      `json:"ok"`
+}
+
+//AuthenticatedUserRoles ...
+type AuthenticatedUserRoles struct {
+	Db   string `json:"db"`
+	Role string `json:"role"`
+}
+
+//AuthenticatedUsers ...
+type AuthenticatedUsers struct {
+	Db   string `json:"db"`
+	User string `json:"user"`
+}
+
+//AuthInfo ...
+type AuthInfo struct {
+	AuthenticatedUserRoles []AuthenticatedUserRoles `json:"authenticatedUserRoles"`
+	AuthenticatedUsers     []AuthenticatedUsers     `json:"authenticatedUsers"`
+}

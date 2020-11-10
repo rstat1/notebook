@@ -188,7 +188,7 @@ func (u *Auth) getJWTAccess(token string) (data.AccessLevel, error) {
 	c := http.Client{}
 	req, _ := http.NewRequest("GET", common.BaseAPIURL+"/trinity/user", nil)
 	req.Header.Add("Authorization", "Bearer "+token)
-	if httpResp, err := c.Do(req); err == nil {
+	if httpResp, err := c.Do(req); err == nil && httpResp.StatusCode == 200 {
 		if body, err := ioutil.ReadAll(httpResp.Body); err == nil {
 			json.Unmarshal(body, &serviceResp)
 			json.Unmarshal([]byte(serviceResp.Response), &user)

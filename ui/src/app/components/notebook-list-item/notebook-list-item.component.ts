@@ -11,8 +11,10 @@ import { FilePlus, BookOpen, Trash2 } from 'angular-feather/icons';
 })
 export class NotebookListItemComponent implements OnInit {
 	@Input() public id: string;
+	@Input() public miniMode: boolean = false;
 	@Input() public title: string = "Untitled Space Story";
 	public titleInitials: string;
+	@Input() public isActive: boolean = false;
 
 	constructor(private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) { }
 	ngOnInit() {

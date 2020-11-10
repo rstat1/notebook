@@ -1,62 +1,90 @@
-<div style="display: flex;">
-	<div class="project-list-button" (click)='showMenu("projects", $event)' [class.project-list-button-selected]="showProjectListMenu == true">
-		<mat-icon style="color:#689F38;">view_module</mat-icon>
-		<span class="project-name">Notebooks</span>
-		<mat-icon>expand_more</mat-icon>
-	</div>
-	<div class="project-list-button" style="width: 146px;" (click)='showMenu("filter", $event)' [class.project-list-button-selected]="showSearch == true">
-		<mat-icon style="color:#689F38;">filter_list</mat-icon>
-		<span class="project-name">Filter by Tag</span>
-		<mat-icon>expand_more</mat-icon>
-	</div>
-	<button style="padding: 0px 5px 0px 0px" mat-button (click)="newDocument()">
-		<mat-icon style="vertical-align: text-bottom;padding-top: 3px;">add</mat-icon>
-		Add Note
-	</button>
-</div>
-<div #projects class="dropdown-box" [class.dropdown-shown]="showProjectListMenu == true" [class.dropdown-hidden]="showProjectListMenu == false">
-	<div id="scrollbox" style="height:500px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
-		<div style="padding-left:10px; padding-right:10px;">
-			<mat-form-field style="width: 100%;margin-top: 15px;">
-				<input matInput placeholder="Search" [(ngModel)]="filterText" (input)="filterProjects()">
-			</mat-form-field>
+<div class="page-container" style="background-color: #424242;">
+	<div style="display: flex;flex-direction: row;" class="page-content page-width">
+		<div style="background-color: #1d1d1d;height:100vh;width:373px;">
+			<div style="margin-top: 4px;">
+				<button style="padding: 0px 5px 0px 0px;margin-left:14px;" mat-button (click)="newDocument()">
+					<mat-icon style="vertical-align: text-bottom;padding-top: 3px;color:#A83D3E">add</mat-icon>
+					Add Notebook
+				</button>
+			</div>
+			<span style="display:block;height:92vh;padding-top:20px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
+				<div style="height:100%;">
+					<notebook-list-item [isActive]="this.isActiveNB(notebook.id)" (click)="this.notebookClicked(notebook)" [title]="notebook.name" *ngFor="let notebook of this.notebooks"></notebook-list-item>					
+				</div>			
+			</span>
 		</div>
-		<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == false">All Notebooks</div>
-		<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == true">Search Results</div>
-		<div class="list-grid">
-			<div class="project-list-item" *ngFor="let p of filteredProjects" (click)="projectClicked(p)">
-				<div class="project-avatar avatar" [attr.data-name]="getInitials(p.name)"></div>
-				<div style="margin-top: 12px;">
-					<span>{{p.name}}</span>
+		<div>
+			<div style="background-color: #2e2e2e;height: 100vh;">
+				<div style="display: flex;">
+					<div class="project-list-button" style="width: 146px;" (click)='showMenu("filter", $event)' [class.project-list-button-selected]="showSearch == true">
+						<mat-icon style="color:#A83D3E;">filter_list</mat-icon>
+						<span class="project-name">Filter by Tag</span>
+						<mat-icon>expand_more</mat-icon>
+					</div>
+					<button style="padding: 0px 5px 0px 0px" mat-button (click)="newDocument()">
+						<mat-icon style="vertical-align: text-bottom;padding-top: 3px;color:#A83D3E">add</mat-icon>
+						Add Note
+					</button>
+				</div>
+				<div #projects class="dropdown-box" [class.dropdown-shown]="showProjectListMenu == true" [class.dropdown-hidden]="showProjectListMenu == false">
+					<div id="scrollbox" style="height:500px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
+						<div style="padding-left:10px; padding-right:10px;">
+							<mat-form-field style="width: 100%;margin-top: 15px;">
+								<input matInput placeholder="Search" [(ngModel)]="filterText" (input)="filterProjects()">
+							</mat-form-field>
+						</div>
+						<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == false">All Notebooks</div>
+						<div style="margin-left: 10px;margin-bottom: 10px;" *ngIf="haveFilter == true">Search Results</div>
+						<div class="list-grid">
+							<div class="project-list-item" *ngFor="let p of filteredProjects" (click)="notebookClicked(p)">
+								<div class="project-avatar avatar" [attr.data-name]="getInitials(p.name)"></div>
+								<div style="margin-top: 12px;">
+									<span>{{p.name}}</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div #search class="dropdown-box" [class.dropdown-shown]="showSearch == true" [class.dropdown-hidden]="showSearch == false">
+					<div id="scrollbox" style="height:250px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
+						<div style="margin-top:15px;margin-left:20px;margin-bottom: 10px;">Tags</div>
+						<mat-chip-list multiple style="margin-left: 10px;" class="chip-list chip-list-list-item">
+							<mat-chip [selectable]="true" [selected]="selectedTags.value.has(tag.tagId)" (click)="clicked(tag.tagId)" *ngFor="let tag of docTags" [value]="tag.tagId">
+								{{tag.tagValue}}
+							</mat-chip>
+						</mat-chip-list>
+					</div>
+				</div>				
+				<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="list" style="min-width: 373px;">
+					<div (click)="this.noteClicked(note.id)" class="list-element" [class.selected-note]="this.isActiveNote(note.id)" *ngFor="let note of notes">
+						<!-- <img style="margin-right: 4px;" src="/assets/wiki.png" width="24" height="24" /> -->
+						<div style="flex: 2;">
+							<span style="display: flex;">
+								<i-feather class="md-icon" style="margin-right: 5px;margin-left:2px;" name="file" matTooltipPosition="below" matTooltip="Title"></i-feather>
+								{{note.title}}
+							</span>
+							<mat-chip-list class="chip-list chip-list-list-item">
+								<i-feather class="md-icon" name="tag" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
+								<mat-basic-chip style="display: flex;" class="status-chip-list-item" *ngFor="let t of note.tags">
+									<span style="margin-top:1px;">{{getTagValue(t)}}</span>
+								</mat-basic-chip>
+								<mat-basic-chip style="display: flex;" class="status-chip-list-item">
+									<span style="margin-top:1px;">other-tag</span>
+								</mat-basic-chip>
+							</mat-chip-list>
+							<mat-chip-list class="chip-list chip-list-list-item">
+								<i-feather class="md-icon" name="clock" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
+								<mat-basic-chip style="display: flex;" class="status-chip-list-item">
+									<span style="margin-top: 1px;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</span>
+								</mat-basic-chip>
+							</mat-chip-list>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
-</div>
-<div #search class="dropdown-box" [class.dropdown-shown]="showSearch == true" [class.dropdown-hidden]="showSearch == false">
-	<div id="scrollbox" style="height:250px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
-		<div style="margin-top:15px;margin-left:20px;margin-bottom: 10px;">Tags</div>
-		<mat-chip-list multiple style="margin-left: 10px;" class="chip-list chip-list-list-item">
-			<mat-chip [selectable]="true" [selected]="selectedTags.value.has(tag.tagId)" (click)="clicked(tag.tagId)" *ngFor="let tag of docTags" [value]="tag.tagId">
-				{{tag.tagValue}}
-			</mat-chip>
-		</mat-chip-list>
-	</div>
-</div>
-<div class="page-margin">
-	<p class="page-title">{{pageTitle}}</p>
-	
-</div>
-<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="list">
-	<div class="list-element" *ngFor="let note of notes">
-		<img style="margin-right: 4px;" src="/assets/wiki.png" width="24" height="24" />
-		<div style="flex: 2;">
-			{{note.title}}
-			<mat-chip-list class="chip-list chip-list-list-item">
-				<mat-basic-chip class="status-chip-list-item" *ngFor="let t of note.tags">
-					{{getTagValue(t)}}
-				</mat-basic-chip>
-			</mat-chip-list>
+		<div *ngIf="this.activePage != null">			
+			<div style="margin-left: 10px;">{{this.pageContent}}</div>
 		</div>
 	</div>
 </div>

@@ -15,7 +15,7 @@
 }
 .list-element {
 	color: #ccc;
-	padding: 13px 60px 13px 60px;
+	padding: 13px 40px 13px 40px;
 	display: flex;
 	align-items: center;
 }
@@ -88,7 +88,7 @@
     border: 0;
 }
 .tag-list-item {
-	background-color: #558b2f;
+	background-color: #A83D3E;
 }
 .status-chip-list-item {
     border: 0;
@@ -98,7 +98,7 @@
     margin-right: 5px;
 }
 .project-avatar {
-	background-color: #558b2f;
+	background-color: #A83D3E;
 	padding-top: 7px;
 	text-align: center;
 	text-transform: uppercase;
@@ -125,4 +125,26 @@
     flex-shrink: 0;
 	object-fit: cover;
 	color:white;
+}
+.selected-note {
+	background-color: #1d1d1d;
+}
+.page-md {
+	display: flex;
+    margin-top: 10px;
+    margin-left: 15px;
+    font-size: 12pt;
+    flex-direction: column;
+}
+.md-item {
+	display: flex;
+	margin-right: 10px;
+	margin-bottom:5px;
+}
+.md-icon {
+	width: 18px;
+	height:18px;
+	color:#A83D3E;
+	margin-left:4px;
+	margin-right:4px;
 }

@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { MatTooltipModule } from '@angular/material';
-import { NgModule, ModuleWithProviders, Inject } from '@angular/core';
+import { NgModule, ModuleWithProviders, Inject, Injectable } from '@angular/core';
 
 import { MenuService } from 'app/services/menu.service';
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
 import { MenuComponent } from 'app/components/menu/menu.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
+@Injectable()
 export class MenuItem {
 	Icon: string;
 	Category: string;
@@ -37,7 +38,7 @@ export class MenuModule {
 		// if (items != null) {
 		// }
 	}
-	static forRoot(items: MenuItems): ModuleWithProviders {
+	static forRoot(items: MenuItems): ModuleWithProviders<MenuModule> {
 		return {
 			ngModule: MenuModule,
 			providers: [

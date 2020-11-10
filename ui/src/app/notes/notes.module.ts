@@ -22,6 +22,7 @@ import { ListOverlayComponent } from 'app/notes/list-overlay/list-overlay.compon
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
 import { BlocksListComponent, BlocksListItem } from 'app/notes/blocks-list/blocks-list.component';
 import { MarkdownEditorComponent } from 'app/components/markdown-editor/markdown-editor.component';
+import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
 import { MarkdownBlockComponent } from 'app/notes/doc-editor/blocks/markdown-block/markdown-block.component';
 import { PlaceholderBlockComponent } from 'app/notes/doc-editor/blocks/placeholder-block/placeholder-block.component';
 
@@ -29,14 +30,16 @@ const icons = { File, FileText, Code, Clock, Tag, Image, List };
 
 const notesRoutes = [
 	{
-		path: 'notes',
+		path: 'nb',
 		component: NotesRootComponent,
 		canActivate: [AuthGuard],
 		canActivateChild: [AuthGuard],
 		children: [
+			{ path: '', component: NotesListComponent },
 			{ path: 'new', component: DocEditorComponent },
-			{ path: ':name', component: NotesListComponent },
-			{ path: '', redirectTo: "/notes/all", pathMatch: 'full' }
+			{ path: ':nbid', component: NotesListComponent, pathMatch: 'full' },
+			{ path: ':nbid/page/:page', component: NotesListComponent, pathMatch: 'full' },
+
 		]
 	}
 ];
@@ -50,15 +53,12 @@ export function markedOptionsFactory(): MarkedOptions {
 	return {
 		renderer: renderer,
 		gfm: true,
-		tables: true,
 		breaks: false,
 		pedantic: false,
-		sanitize: true,
 		smartLists: false,
 		smartypants: false,
 	};
 }
-
 
 @NgModule({
 	declarations: [
@@ -88,6 +88,7 @@ export function markedOptionsFactory(): MarkedOptions {
 		MatTooltipModule,
 		MatGridListModule,
 		MatButtonToggleModule,
+		NotebookListItemModule,
 		FeatherModule.pick(icons),
 		MalihuScrollbarModule.forRoot(),
 		RouterModule.forChild(notesRoutes),

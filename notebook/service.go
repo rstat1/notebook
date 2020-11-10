@@ -11,7 +11,6 @@ import (
 	"go.alargerobot.dev/notebook/common"
 	"go.alargerobot.dev/notebook/crypto"
 	"go.alargerobot.dev/notebook/data"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 //ServiceAPI ...
@@ -48,31 +47,21 @@ func (notesAPI *ServiceAPI) GetNotebooks(username string) ([]data.NotebookRefere
 
 //NewPage ...
 func (notesAPI *ServiceAPI) NewPage(page data.NewPageRequest) error {
-	transactionCB := func(sessCtx mongo.SessionContext) (interface{}, error) {
-		if valid, e := notesAPI.data.IsValidTagID(page.Metadata.Tags, page.Metadata.Creator); e != nil {
-			return nil, common.LogError("", e)
-		} else if valid == false {
-			return nil, common.LogError("", errors.New("One or more of the specified tags is invalid"))
-		}
+	if valid, e := notesAPI.data.IsValidTagID(page.Metadata.Tags, page.Metadata.Creator); e != nil {
+		return common.LogError("", e)
+	} else if valid == false {
+		return common.LogError("data.IsValidTagID", errors.New("One or more of the specified tags is invalid"))
+	}
 
-		if err := notesAPI.data.NewPage(page.Metadata, page.NotebookID); err != nil {
-			return nil, common.LogError("", err)
-		}
-		
-		if err := notesAPI.writePageContentToDisk(page.ContentAsBase64, page.Metadata.ID, page.NotebookID); err != nil {
-			return nil, common.LogError("", err)
-		}
-		return nil, nil
+	if err := notesAPI.writePageContentToDisk(page.ContentAsBase64, page.Metadata.ID, page.NotebookID); err != nil {
+		return common.LogError("writePageContentToDisk", err)
 	}
-	if err := notesAPI.data.Transaction(transactionCB); err != nil {
-		if e := notesAPI.vaultClient.DeleteKeyFromKV(page.NotebookID + "/" + page.Metadata.ID); e != nil {
-			return common.LogError("", e)
-		} else {
-			return common.LogError("", err)
-		}
-	} else {
-		return nil
+
+	if err := notesAPI.data.NewPage(page.Metadata, page.NotebookID); err != nil {
+		notesAPI.cleanupAfterError(page.Metadata.ID, page.NotebookID)
+		return err
 	}
+	return nil
 }
 
 //ReadPage ...
@@ -142,7 +131,7 @@ func (notesAPI *ServiceAPI) DeleteNotebook(id string) error {
 func (notesAPI *ServiceAPI) writePageContentToDisk(pageContent, pageID, notebookID string) error {
 	wd, _ := os.Getwd()
 	path := wd + "/notebooks/" + notebookID + "/" + pageID
-	content, err := base64.RawURLEncoding.DecodeString(pageContent)
+	content, err := base64.RawStdEncoding.DecodeString(pageContent)
 	if err != nil {
 		return err
 	}
@@ -175,4 +164,11 @@ func (notesAPI *ServiceAPI) writePageContentToDisk(pageContent, pageID, notebook
 		return err
 	}
 	return nil
+}
+
+func (notesAPI *ServiceAPI) cleanupAfterError(pageID, notebookID string) {
+	wd, _ := os.Getwd()
+	path := wd + "/notebooks/" + notebookID + "/" + pageID
+	os.RemoveAll(path)
+	notesAPI.vaultClient.DeleteKeyFromKV(notebookID + "/" + pageID)
 }

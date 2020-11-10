@@ -109,7 +109,7 @@ input[type=text]:focus {
 }
 .item-grid {
     flex: 1;
-    height:100vh;
+    height:100%;
     display: grid;
     margin-left: 72px;
     max-width: 852px;

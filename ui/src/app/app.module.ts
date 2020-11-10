@@ -29,16 +29,17 @@ import { EventService } from 'app/services/event.service';
 import { AuthService } from 'app/services/auth/auth.service';
 import { HeaderInfoService } from 'app/services/header-info.service';
 import { CommandListService } from 'app/components/command-list/command-list.service';
-import { NotebookListItemComponent } from './components/notebook-list-item/notebook-list-item.component';
+import { NotebookListItemModule } from './components/notebook-list-item/notebook-list-item.module';
+
 
 const icons = { FilePlus, Trash2, List, Sliders };
 
 const appRoutes: Routes = [
 	{ path: 'auth', component: AuthComponent, pathMatch: "full" },
-	{ path: 'home', component: Home, canActivate: [AuthGuard] },
-	{ path: 'notes', loadChildren: () => import('app/notes/notes.module').then(m => m.NotesModule), canActivate: [AuthGuard] },
+	{ path: 'home', redirectTo: "/nb", canActivate: [AuthGuard] },
+	{ path: 'nb', loadChildren: () => import('app/notes/notes.module').then(m => m.NotesModule), canActivate: [AuthGuard] },
 	{ path: 'settings', loadChildren: () => import('app/admin/admin.module').then(m => m.AdminModule), canActivate: [RootGuard] },
-	{ path: '', component: Home, canActivate: [AuthGuard], pathMatch: 'full' }
+	{ path: '', redirectTo: "/nb", pathMatch: 'full' }
 ];
 
 const appMenuItems = {
@@ -66,7 +67,6 @@ const appMenuItems = {
 		AuthComponent,
 		CommandListItem,
 		CommandListComponent,
-		NotebookListItemComponent,
 	],
 	imports: [
 		FormsModule,
@@ -80,11 +80,12 @@ const appMenuItems = {
 		MatButtonModule,
 		MatTooltipModule,
 		HttpClientModule,
+		NotebookListItemModule,
 		BrowserAnimationsModule,
 		FeatherModule.pick(icons),
 		MalihuScrollbarModule.forRoot(),
 		MenuModule.forRoot(appMenuItems),
-		RouterModule.forRoot(appRoutes, { enableTracing: false })
+		RouterModule.forRoot(appRoutes, { enableTracing: true })
 	],
 	providers: [AuthService, APIService, AuthGuard, HeaderInfoService, { provide: HTTP_INTERCEPTORS, multi: true, useClass: AuthTokenInjector },
 		MenuService, RootGuard, EventService, CommandListService],

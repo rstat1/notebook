@@ -24,7 +24,7 @@ export class MenuComponent implements OnInit {
 		autoHideScrollbar: true,
 	};
 
-	constructor(public menu: MenuService, private auth: AuthService) {}
+	constructor(public menu: MenuService, private auth: AuthService) { }
 	ngOnInit() {
 		this.categories = this.menu.GetCategoryList();
 	}
@@ -35,9 +35,9 @@ export class MenuComponent implements OnInit {
 		return this.menu.GetCategoryItems(category, this.menuType);
 	}
 	public doSomethingWithClick(clickedItemTitle: string) {
-		if (clickedItemTitle == "home") {
-			clickedItemTitle = "projects";
-		}
+		// if (clickedItemTitle == "home") {
+
+		// }
 		this.isVisible = false;
 		this.menu.SetMenuContext(clickedItemTitle, "");
 		this.menu.HandleMouseEvent(clickedItemTitle);

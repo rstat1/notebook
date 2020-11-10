@@ -1,5 +1,5 @@
 import { Router } from '@angular/router';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatIconRegistry } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -9,6 +9,7 @@ import { MenuService } from 'app/services/menu.service';
 import { APIService } from 'app/services/api/api.service';
 import { AuthService } from 'app/services/auth/auth.service';
 import { NotebookReference } from 'app/services/api/QueryResponses';
+import { DataCacheService } from 'app/services/data-cache.service';
 
 @Component({
 	selector: 'components-home',
@@ -26,17 +27,23 @@ export class Home implements OnInit {
 	public notebooks: NotebookReference[];
 
 	constructor(public authService: AuthService, private api: APIService, private router: Router, private menu: MenuService,
-		private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer) { }
+		private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private cache: DataCacheService) { }
 
 	ngOnInit(): void {
 		this.matIconRegistry.addSvgIconLiteral("feather_sliders", this.domSanitizer.bypassSecurityTrustHtml(Sliders));
 		this.matIconRegistry.addSvgIconLiteral("feather_plus", this.domSanitizer.bypassSecurityTrustHtml(Plus));
 
 		this.menu.SetMenuContext("home", "");
-		this.api.GetNotebookRefs().subscribe(resp => {
-			if (resp.status == "success") {
-				this.notebooks = JSON.parse(resp.response);
-			}
-		});
+		this.cache.getNotebookList().subscribe(resp => {
+			this.notebooks = resp;
+		})
+		// this.api.GetNotebookRefs().subscribe(resp => {
+		// 	if (resp.status == "success") {
+		// 	}
+		// });
+	}
+	public navToNotebook(notebook: NotebookReference) {
+		this.cache.setCurrentNotebook(notebook);
+		this.router.navigate(["notebook", notebook.id]);
 	}
 }

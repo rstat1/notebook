@@ -8,6 +8,7 @@ import { APIService } from 'app/services/api/api.service';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
 import { PageTag, Page, NotebookReference, PageReference } from 'app/services/api/QueryResponses';
+import { NotebookListItemComponent } from 'app/components/notebook-list-item/notebook-list-item.component';
 
 @Component({
 	selector: 'app-notes-list',
@@ -15,16 +16,18 @@ import { PageTag, Page, NotebookReference, PageReference } from 'app/services/ap
 	styleUrls: ['./notes-list.component.css']
 })
 export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
-	@ViewChild('projects', { static: false }) projectsDropdown: ElementRef<HTMLElement>;
-	@ViewChild('search', { static: false }) filterDropdown: ElementRef<HTMLElement>;
+	@ViewChild('projects') projectsDropdown: ElementRef<HTMLElement>;
+	@ViewChild('search') filterDropdown: ElementRef<HTMLElement>;
 
-	public pageTitle: string;
+	public activePageID: string = "";
 	public filterText: string = "";
+	public activeNotebookID: string;
 	public haveFilter: boolean = false;
 	public showSearch: boolean = false;
+	public currentDate = new Date();
 	public showProjectListMenu: boolean = false;
 	public notes: PageReference[] = new Array<PageReference>();
-	public projects: NotebookReference[] = new Array<NotebookReference>();
+	public notebooks: NotebookReference[] = new Array<NotebookReference>();
 	public docTags: PageTag[] = Array<PageTag>();
 	public docTagsMap: Map<string, string> = new Map();
 	public filteredProjects: NotebookReference[] = new Array<NotebookReference>();
@@ -36,15 +39,43 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		autoHideScrollbar: true,
 	};
 	public selectedTags: FormControl = new FormControl(new Set());
+	public activePage: PageReference = null;
+	public pageContent: string = "";
 
 	constructor(private router: Router, private route: ActivatedRoute, private api: APIService, private focusMon: FocusMonitor,
 		private cdr: ChangeDetectorRef, private zone: NgZone, private dialog: MatDialog, private cache: DataCacheService) { }
 
 	ngOnInit() {
-		this.route.params.subscribe((params) => { this.pageTitle = params.name + " Notes"; });
-		this.api.GetNotebookRefs().subscribe(resp => {
-			this.filteredProjects = this.projects = JSON.parse(resp.response);
+		this.route.params.subscribe((params) => {
+			console.log(params)
+			if (params.nbid != "all" && params.nbid != undefined) {
+				this.activeNotebookID = params.nbid;
+				this.api.GetPages(params.nbid).subscribe(resp => {
+					this.notes = JSON.parse(resp.response);
+				});
+			} else {
+				this.notes = Array();
+				this.activeNotebookID = "";
+			}
+
+			if (this.activeNotebookID != "" && params.page != "") {
+				console.log("load page: " + params.page + " from notebook: " + params.nbid)
+				this.activePageID = params.page;
+				this.api.GetPageMetadata(this.activePageID, this.activeNotebookID).subscribe(resp => {
+					if (resp.status == "success") {
+						this.activePage = JSON.parse(resp.response);
+						this.api.GetPageContent(this.activePageID, this.activeNotebookID).subscribe(resp => {
+							if (resp.status == "success") {
+								this.pageContent = JSON.parse(resp.response);
+							}
+						})
+					}
+				});
+			}
 		});
+		this.cache.getNotebookList().subscribe(resp => {
+			this.notebooks = resp;
+		})
 		this.cache.getTagList().subscribe(resp => {
 			this.docTags = resp;
 			this.docTagsMap = this.cache.getTagMap();
@@ -54,9 +85,6 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.focusMon.monitor(this.projectsDropdown, true).subscribe(o => this.zone.run(() => {
 			this.cdr.markForCheck();
 			if (o == null) { this.showProjectListMenu = false; }
-			// else {
-			// 	this.projectsDropdown.nativeElement.focus();
-			// }
 		}));
 		this.focusMon.monitor(this.filterDropdown, true).subscribe(o => this.zone.run(() => {
 			this.cdr.markForCheck();
@@ -73,11 +101,12 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		const removeChip = () => { this.selectedTags.value.delete(id); };
 		this.selectedTags.value.has(id) ? removeChip() : addChip();
 		var tagsSelected: Array<number> = Array.from(this.selectedTags.value);
-		if (tagsSelected.length > 0) {
-			this.pageTitle = "Custom Filter";
-		} else {
-			this.pageTitle = "All Notes";
-		}
+	}
+	public isActiveNB(id: string): boolean {
+		return id === this.activeNotebookID;
+	}
+	public isActiveNote(id: string): boolean {
+		return id === this.activePageID;
 	}
 	public getTagValue(value: string): string {
 		return this.docTagsMap.get(value);
@@ -85,10 +114,10 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	public filterProjects() {
 		if (this.filterText != "") {
 			this.haveFilter = true;
-			this.filteredProjects = this.projects.filter(notebook => notebook.name.indexOf(this.filterText, 0) > -1, this);
+			this.filteredProjects = this.notebooks.filter(notebook => notebook.name.indexOf(this.filterText, 0) > -1, this);
 		} else {
 			this.haveFilter = false;
-			this.filteredProjects = this.projects;
+			this.filteredProjects = this.notebooks;
 		}
 	}
 	public showMenu(which: string, event: MouseEvent) {
@@ -104,12 +133,12 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			this.showProjectListMenu = false;
 		}
 	}
-	public projectClicked(notebook: NotebookReference) {
-		this.showProjectListMenu = false;
-		this.pageTitle = notebook.name;
-		this.api.GetPages(notebook.id).subscribe(resp => {
-			this.notes = JSON.parse(resp.response);
-		});
+	public notebookClicked(notebook: NotebookReference) {
+		this.activePageID = "";
+		this.router.navigate(["nb/" + notebook.id]);
+	}
+	public noteClicked(id: string) {
+		this.router.navigate(["page", id])
 	}
 	public getInitials(projectName: string) {
 		return projectName.substring(0, 2);
