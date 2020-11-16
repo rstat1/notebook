@@ -24,12 +24,15 @@
             "styles": [
               "src/styles.css",
               "src/app/root-layout/material-tweaks.scss",
+              "node_modules/medium-editor/dist/css/medium-editor.min.css",
+              "src/app/notes/doc-editor/editor-theme.css",
               "node_modules/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",
               "node_modules/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js",
-              "node_modules/marked/lib/marked.js"
+              "node_modules/marked/lib/marked.js",
+              "node_modules/medium-editor/dist/js/medium-editor.min.js"
             ]
           },
           "configurations": {

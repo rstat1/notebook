@@ -1,17 +1,17 @@
-import { UUID } from 'angular2-uuid';
-import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
-import { Component, OnInit, ElementRef, ViewChild, ComponentFactoryResolver, Injector, ComponentRef, Type } from '@angular/core';
+///<reference path="medium-editor.d.ts" />"
+import * as MediumEditor from 'medium-editor';
+
+import { MatDialogRef } from '@angular/material';
+import { Component, OnInit, ElementRef, ViewChild, ComponentFactoryResolver, Injector, ComponentRef, Type, AfterViewInit } from '@angular/core';
 
 import { PageTag } from 'app/services/api/QueryResponses';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { ICommandListEntry } from 'app/components/command-list/cmd-list-common';
 import { ListOverlayService } from 'app/notes/list-overlay/list-overlay.service';
 import { BlocksListComponent } from 'app/notes/blocks-list/blocks-list.component';
-import { ListOverlayComponent } from 'app/notes/list-overlay/list-overlay.component';
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
-import { MarkdownBlockComponent } from 'app/notes/doc-editor/blocks/markdown-block/markdown-block.component';
-import { IEditorBlock, IEditorBlockHost, IEditorBlockAction } from 'app/notes/doc-editor/blocks/block-common';
-import { PlaceholderBlockComponent } from 'app/notes/doc-editor/blocks/placeholder-block/placeholder-block.component';
+
+import { MDBoldButton, MDItalicButton, MDStrikeButton } from 'app/notes/doc-editor/markdown-buttons'
 
 export type BlockComponent<T> = Type<T>;
 
@@ -20,13 +20,15 @@ export type BlockComponent<T> = Type<T>;
 	templateUrl: './doc-editor.html',
 	styleUrls: ['./doc-editor.css'],
 })
-export class DocEditorComponent implements OnInit, IEditorBlockHost {
+export class DocEditorComponent implements OnInit, AfterViewInit {
 	public text: string = "";
 	public title: string = "";
 	public currentDate = new Date();
 	public showTagsPH: boolean = true;
 	public showTitlePH: boolean = true;
+	public showContentPH: boolean = true;
 	public tags: PageTag[] = new Array();
+	public mdEditor: MediumEditor.MediumEditor;
 	@ViewChild('editorBlock', { static: true }) public editor: ElementRef;
 	public scrollbarOptions = { scrollInertia: 0, theme: 'dark', scrollbarPosition: "inside", alwaysShowScrollbar: 0, autoHideScrollbar: true };
 
@@ -36,14 +38,33 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 	private overlayVisible: boolean = false;
 	private lastCmdComplete: boolean = false;
 
-	constructor(private resolve: ComponentFactoryResolver, private inject: Injector, private listOverlay: ListOverlayService, private cache: DataCacheService) { }
+	constructor(private resolve: ComponentFactoryResolver, private inject: Injector, private listOverlay: ListOverlayService,
+		private cache: DataCacheService, public dialogRef: MatDialogRef<DocEditorComponent>) { }
 
-	ngOnInit() { }
-	addEditorBlockAction(action: IEditorBlockAction): void {
-		throw new Error("Method not implemented.");
+	ngAfterViewInit(): void {
+		this.mdEditor = new MediumEditor(this.editor.nativeElement, {
+			toolbar: {
+				buttons: ["md-bold", "md-italic", "md-strike"]
+			},
+			paste: {
+				forcePlainText: true,
+				cleanPastedHTML: true,
+				cleanAttrs: ['class', 'style', 'dir', 'name'],
+			},
+			placeholder: {
+				hideOnClick: false,
+				text: "Page content goes here"
+			},
+			extensions: {
+				'MDBold': new MDBoldButton(),
+				'MDStrike': new MDStrikeButton(),
+				'MDItalic': new MDItalicButton(),
+			}
+		});
 	}
-	deleteABlock(blockID: string): void {
-		throw new Error("Method not implemented.");
+
+	ngOnInit() {
+
 	}
 	showListOfBlocks(blockID: string): void {
 		this.showListOverlay(this.editor.nativeElement);
@@ -51,7 +72,9 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 	keyDown(event: KeyboardEvent) {
 		if (event != undefined) {
 			var currentText: string = this.editor.nativeElement.innerText;
-			if (event.key == "Enter" && this.isCommand() && this.lastCmdComplete) {
+			if (currentText != "") { this.showContentPH = false; }
+			else { this.showContentPH = true; }
+			if (event.key == "Enter" && this.execCommand() && this.lastCmdComplete) {
 				if (this.overlayVisible == true) {
 					this.listOverlay.close();
 					this.overlayVisible = false;
@@ -59,14 +82,10 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 				this.editor.nativeElement.innerText = currentText.replace(this.lastCmd, "");
 				event.preventDefault();
 
-				console.log(this.lastCmd)
 
 				if (this.lastCmd.startsWith("tag")) {
 					this.showTagsPH = false;
 					this.addTag(this.lastCmd.substring(4).replace('"', ""));
-				} else if (this.lastCmd.startsWith("block")) {
-					console.log("add block")
-
 				} else if (this.lastCmd.startsWith("title")) {
 					this.showTitlePH = false;
 					this.title = this.lastCmd.substring(7).replace('"', "");
@@ -88,29 +107,22 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 	}
 	onInput() {
 		var currentText: string = this.editor.nativeElement.innerText;
-
-		if (currentText.charAt(0) == "/" && currentText.length == 1) {
-			if (this.overlayVisible == false) {
-				this.showListOverlay();
-				this.overlayVisible = true;
-			}
-		} else if (currentText.length == 0) {
+		if (currentText.length < 4 && this.overlayVisible) {
 			this.listOverlay.close();
 			this.overlayVisible = false;
-		} else if (this.isCommand()) {
-
+		} else {
+			this.execCommand()
 		}
 		if (this.overlayVisible) {
 			this.listOverlay.filterList(currentText);
 		}
 	}
-	isCommand(): boolean {
+	execCommand(): boolean {
 		var firstQuote: number = -1;
 		var secondQuote: number = -1;
 		var currentText: string = this.editor.nativeElement.innerText;
 		var tagIdx: number = currentText.indexOf('tag:"');
 		var titleIdx: number = currentText.indexOf("title:");
-		var blockIdx: number = currentText.indexOf('block:"');
 
 		if (titleIdx > -1) {
 			firstQuote = currentText.indexOf('"', titleIdx);
@@ -151,41 +163,8 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 			}
 			this.lastCmd = 'tag:"' + currentText.substring(firstQuote + 1, secondQuote) + '"';
 		}
-		if (blockIdx > -1) {
-			this.cmdStart = blockIdx;
-			firstQuote = currentText.indexOf('"', blockIdx);
-			if (firstQuote > -1) {
-				secondQuote = currentText.indexOf('"', firstQuote + 1);
-				if (secondQuote > -1) {
-					this.lastCmd = 'block:"' + currentText.substring(firstQuote + 1, secondQuote) + '"';
-					this.cmdStop = secondQuote;
-					this.lastCmdComplete = true;
-				} else {
-					if (this.lastCmd == "") {
-						this.lastCmd = 'block:"';
-						this.lastCmdComplete = false;
-					}
-					this.cmdStop = firstQuote;
-				}
-			}
-			if (!this.overlayVisible) {
-				this.showListOverlay();
-			}
-		}
 		if (this.lastCmd != "") { return true }
 		else { return false; }
-	}
-	itemSelected(item: ICommandListEntry) {
-		switch (item.description) {
-			case "markdown":
-				this.lastCmd += 'markdown"';
-				this.lastCmdComplete = true;
-				this.editor.nativeElement.innerText = (<string>this.editor.nativeElement.innerText).slice(0, this.cmdStop) + '"markdown"' +
-					(<string>this.editor.nativeElement.innerText).slice(this.cmdStop + 10);
-				break;
-		}
-		this.listOverlay.close();
-		this.overlayVisible = false;
 	}
 	tagListItemClicked(item: ICommandListEntry) {
 		console.log("add tag with ID " + item.context.tagId + " & value " + item.context.tagValue);
@@ -204,59 +183,45 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 		var blocks: ICommandListEntry[] = new Array();
 
 		this.cache.getTagList().subscribe(resp => {
-			resp.forEach((value, idx) => {
-				blocks.push({
-					context: value,
-					description: value.tagValue,
-					action: (extra: ICommandListEntry) => this.tagListItemClicked(extra),
-					itemTemplate: this.createBlockListItem("list", value.tagValue, "")
+			if (resp.length > 0) {
+				resp.forEach((value, idx) => {
+					blocks.push({
+						context: value,
+						description: value.tagValue,
+						action: (extra: ICommandListEntry) => this.tagListItemClicked(extra),
+						itemTemplate: this.createBlockListItem("list", value.tagValue, "")
+					});
 				});
-			});
+			} else {
+
+			}
 		});
 
 		return blocks;
-	}
-	getCommandList(): ICommandListEntry[] {
-		var blocks: ICommandListEntry[] = new Array();
-
-		blocks.push({
-			description: "markdown",
-			action: (extra: ICommandListEntry) => this.itemSelected(extra),
-			itemTemplate: this.createBlockListItem("font_download", "Markdown", "Add a block of text. Markdown is supported here.")
-		});
-		blocks.push({
-			description: "list",
-			action: (extra: ICommandListEntry) => this.itemSelected(extra),
-			itemTemplate: this.createBlockListItem("list", "List", "Add a list block")
-		});
-		blocks.push({
-			description: "picture",
-			action: (extra: ICommandListEntry) => this.itemSelected(extra),
-			itemTemplate: this.createBlockListItem("wallpaper", "Picture", "Upload/embed an image")
-		});
-		blocks.push({
-			description: "code",
-			action: (extra: ICommandListEntry) => this.itemSelected(extra),
-			itemTemplate: this.createBlockListItem("code", "Code Snippet", "Capture a code snippet")
-		});
-		return blocks;
-	}
-	filterCommandList(filter: string): ICommandListEntry[] {
-		throw new Error("Method not implemented.");
 	}
 	trackByBlock(index: number, item: any) {
 		return item;
+	}
+	public close() {
+		this.dialogRef.close();
 	}
 	public addBlock() {
 		this.showListOverlay();
 	}
 	private showListOverlay(origin?: HTMLElement, listItems?: ICommandListEntry[]) {
-		var items: ICommandListEntry[] = this.getCommandList();
+		var items: ICommandListEntry[] = listItems;
 		if (!origin) {
 			origin = this.editor.nativeElement;
 		}
 		if (listItems != undefined && listItems.length > 0) {
 			items = listItems;
+		} else {
+			items.push({
+				context: "no-tags",
+				description: "No tags available",
+				action: (extra: ICommandListEntry) => { },
+				itemTemplate: this.createBlockListItem("list", "No tags available", "")
+			});
 		}
 		this.overlayVisible = true;
 		this.listOverlay.open({ listElement: BlocksListComponent, listContent: items, listOrigin: origin });
@@ -268,13 +233,5 @@ export class DocEditorComponent implements OnInit, IEditorBlockHost {
 		childComponent.instance.ItemText = itemTitle;
 		childComponent.instance.ItemDescription = itemDescription;
 		return childComponent;
-	}
-	private createBlock<T>(block: BlockComponent<T>): ComponentRef<T> {
-		let partFactory = this.resolve.resolveComponentFactory(block);
-		let blockInstance = partFactory.create(this.inject);
-		return blockInstance;
-	}
-	private createMarkdownBlock() {
-
 	}
 }

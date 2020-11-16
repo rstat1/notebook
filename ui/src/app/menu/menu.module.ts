@@ -23,7 +23,7 @@ export class MenuItems {
 }
 
 @NgModule({
-	imports: [CommonModule, MalihuScrollbarModule.forRoot(), MatTooltipModule, BrowserAnimationsModule],
+	imports: [CommonModule, MalihuScrollbarModule.forRoot(), MatTooltipModule],
 	exports: [MenuComponent],
 	declarations: [MenuComponent],
 	providers: [MenuItem]

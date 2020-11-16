@@ -57,9 +57,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.notes = Array();
 				this.activeNotebookID = "";
 			}
-
 			if (this.activeNotebookID != "" && params.page != "") {
-				console.log("load page: " + params.page + " from notebook: " + params.nbid)
 				this.activePageID = params.page;
 				this.api.GetPageMetadata(this.activePageID, this.activeNotebookID).subscribe(resp => {
 					if (resp.status == "success") {
@@ -135,17 +133,21 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 	public notebookClicked(notebook: NotebookReference) {
 		this.activePageID = "";
-		this.router.navigate(["nb/" + notebook.id]);
+		this.router.navigate(["nb", notebook.id]);
 	}
 	public noteClicked(id: string) {
-		this.router.navigate(["page", id], { relativeTo: this.route });
+		if (this.activePageID != "") {
+			this.router.navigate(["../../page", id], { relativeTo: this.route });
+		} else {
+			this.router.navigate(["page", id], { relativeTo: this.route });
+		}
 	}
 	public getInitials(projectName: string) {
 		return projectName.substring(0, 2);
 	}
 	public newDocument() {
 		this.dialog.open(DocEditorComponent, {
-			width: '1000px',
+			width: '1050px',
 			disableClose: true,
 			autoFocus: true,
 			data: {},

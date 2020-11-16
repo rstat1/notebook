@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterModule, Routes } from '@angular/router';
@@ -24,6 +23,7 @@ import { AuthTokenInjector } from 'app/services/api/AuthTokenInjector';
 import { CommandListComponent, CommandListItem } from 'app/components/command-list/command-list.component';
 
 import { MenuService } from 'app/services/menu.service';
+import { AppRoutingModule } from 'app/app-routes.module';
 import { APIService } from 'app/services/api/api.service';
 import { EventService } from 'app/services/event.service';
 import { AuthService } from 'app/services/auth/auth.service';
@@ -34,13 +34,13 @@ import { NotebookListItemModule } from './components/notebook-list-item/notebook
 
 const icons = { FilePlus, Trash2, List, Sliders };
 
-const appRoutes: Routes = [
-	{ path: 'auth', component: AuthComponent, pathMatch: "full" },
-	{ path: 'home', redirectTo: "/nb", canActivate: [AuthGuard] },
-	{ path: 'nb', loadChildren: () => import('app/notes/notes.module').then(m => m.NotesModule), canActivate: [AuthGuard] },
-	{ path: 'settings', loadChildren: () => import('app/admin/admin.module').then(m => m.AdminModule), canActivate: [RootGuard] },
-	{ path: '', redirectTo: "/nb", pathMatch: 'full' }
-];
+// const appRoutes: Routes = [
+// 	{ path: 'auth', component: AuthComponent, pathMatch: "full" },
+// 	{ path: 'home', redirectTo: "/nb", canActivate: [AuthGuard] },
+// 	{ path: 'nb', loadChildren: () => import('app/notes/notes.module').then(m => m.NotesModule), canActivate: [AuthGuard] },
+// 	{ path: 'settings', loadChildren: () => import('app/admin/admin.module').then(m => m.AdminModule), canActivate: [RootGuard] },
+// 	{ path: '', redirectTo: "/nb", pathMatch: 'full' }
+// ];
 
 const appMenuItems = {
 	Items: [
@@ -72,7 +72,6 @@ const appMenuItems = {
 		FormsModule,
 		NotesModule,
 		AdminModule,
-		CommonModule,
 		OverlayModule,
 		BrowserModule,
 		MatIconModule,
@@ -80,12 +79,13 @@ const appMenuItems = {
 		MatButtonModule,
 		MatTooltipModule,
 		HttpClientModule,
+		AppRoutingModule,
 		NotebookListItemModule,
 		BrowserAnimationsModule,
 		FeatherModule.pick(icons),
 		MalihuScrollbarModule.forRoot(),
 		MenuModule.forRoot(appMenuItems),
-		RouterModule.forRoot(appRoutes, { enableTracing: true })
+		// RouterModule.forRoot(appRoutes, { enableTracing: false })
 	],
 	providers: [AuthService, APIService, AuthGuard, HeaderInfoService, { provide: HTTP_INTERCEPTORS, multi: true, useClass: AuthTokenInjector },
 		MenuService, RootGuard, EventService, CommandListService],

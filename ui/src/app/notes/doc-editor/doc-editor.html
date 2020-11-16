@@ -1,75 +1,38 @@
 <div style="display: flex;">
-	<div style="display: flex;margin-right: 10px;">
-		<i-feather style="color:#558B2F" name="file" matTooltipPosition="below" matTooltip="Title"></i-feather>
-		<span [class.placeholder-text-visible]="showTitlePH == true"
+	<div style="display: flex; flex-direction:column;flex:1;">
+		<div style="display: flex;margin-right: 10px;margin-bottom: 6px;">
+			<i-feather style="color:#A83D3E" name="file" matTooltipPosition="below" matTooltip="Title"></i-feather>
+			<span [class.placeholder-text-visible]="showTitlePH == true"
 			  [class.placeholder-text-invisible]="showTitlePH == false"
 			  class="placeholder-text">Type title:"" and press enter to set the title</span>
-		<span style="margin-top:4px;margin-left:4px;" *ngIf="showTitlePH == false && title != ''">{{title}}</span>
+			<span style="margin-top:4px;margin-left:4px;" *ngIf="showTitlePH == false && title != ''">{{title}}</span>
+		</div>
+		<div style="display: flex;margin-right: 10px;margin-bottom: 8px;">
+			<i-feather style="color:#A83D3E" name="clock" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
+			<span style="margin-top: 4px;margin-left: 4px;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</span>
+		</div>
+		<div style="display: flex;margin-right: 10px;">
+			<i-feather style="color:#A83D3E" name="tag" matTooltipPosition="below" matTooltip="Tags"></i-feather>
+			<span [class.placeholder-text-visible]="showTagsPH == true && tags.length == 0"  
+				  [class.placeholder-text-invisible]="showTagsPH == false && tags.length > 0" class="placeholder-text">
+				  Type tag: plus the tag name in quotes, and press enter to add a tag
+			</span>
+			<span *ngIf="showTagsPH == false && tags.length > 0">
+				<mat-chip-list class="chip-list chip-list-list-item">
+					<mat-basic-chip class="status-chip-list-item" *ngFor="let t of tags">
+						{{t.tagValue}}
+					</mat-basic-chip>
+				</mat-chip-list>
+			</span>
+		</div>
 	</div>
-	<div style="display: flex;margin-right: 10px;">
-		<i-feather style="color:#558B2F" name="clock" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
-		<span style="margin-top: 4px;margin-left: 4px;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</span>
-	</div>
-	<div style="display: flex;margin-right: 10px;">
-		<i-feather style="color:#558B2F" name="tag" matTooltipPosition="below" matTooltip="Tags"></i-feather>
-		<span [class.placeholder-text-visible]="showTagsPH == true && tags.length == 0"
-			  [class.placeholder-text-invisible]="showTagsPH == false && tags.length > 0"
-			  class="placeholder-text">Type tag: plus the tag name in quotes, and press enter to add a tag</span>
-		<span *ngIf="showTagsPH == false && tags.length > 0">
-			<mat-chip-list class="chip-list chip-list-list-item">
-				<mat-basic-chip class="status-chip-list-item" *ngFor="let t of tags">
-					{{t.tagValue}}
-				</mat-basic-chip>
-			</mat-chip-list>
-		</span>
-	</div>
+	<button matTooltipPosition="below" matTooltip="Save" mat-icon-button>
+		<mat-icon>save</mat-icon>
+	</button>
+	<button tabindex="1" matTooltipPosition="below" matTooltip="Close without saving" mat-icon-button (click)="close()">
+		<mat-icon>close</mat-icon>
+	</button>	
 </div>
-<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="note-content">
-	<div #editorBlock (input)="onInput()" (keydown)="keyDown($event)" contenteditable="true" placeholder="Untitled"></div>
-	<!-- <div class="document-metadata" style="margin:30px 10px 30px 0px">
-		<div style="grid-row:1;grid-column:1;display:flex;align-items:center;margin-bottom:10px;">
-			<div style="margin-right:30px">
-				<span style="display:flex;align-items: center;">
-					<mat-icon style="color:#689F38;margin-right:5px;">watch_later</mat-icon>
-					Created:
-				</span>
-			</div>
-			<div style="grid-row:1;grid-column:2;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</div>
-		</div>
-		<div style="grid-row:2;grid-column:1;margin:1px 1px 1px 1px;display:flex;align-items:center;">
-			<div style="margin-right:30px;min-width:81px;">
-				<span style="display:flex;align-items: center;">
-					<mat-icon style="color:#689F38;margin-right:5px;">view_list</mat-icon>
-					Tags:
-				</span>
-			</div>
-			<div style="grid-row:2;grid-column:2;">tags</div>
-		</div>
-	</div>
-	<span #editorBlock></span>
-	<div class="editor-blocks" cdkDropList #firstColumn="cdkDropList" [cdkDropListConnectedTo]="columnTwo" [cdkDropListData]="blockOrder"
-		 (cdkDropListDropped)="drop($event)">
-		<div cdkDrag *ngFor="let tile of blockOrder; trackBy:trackByBlock">
-			<div class="drag-placeholder" *cdkDragPlaceholder></div>
-			<editor-block-host class="editor-block"
-							   (cdkDragStarted)="disableActionsMenu()"
-							   (cdkDragEnded)="disableActionsMenu()"
-							   [actionsBoxEnabled]="actionBoxEnabled"
-							   [HostedItem]="getBlockByID(tile)"></editor-block-host>
-
-		</div>
-	</div>
-	<div style="background-color: red; min-height:50px;" class="editor-blocks" cdkDropList #columnTwo="cdkDropList" [cdkDropListConnectedTo]="firstColumn" [cdkDropListData]="secondColumn"
-		 (cdkDropListDropped)="drop($event)">
-		<div cdkDrag *ngFor="let tile of secondColumn; trackBy:trackByBlock">
-			<div class="drag-placeholder" *cdkDragPlaceholder></div>
-			<editor-block-host class="editor-block"
-							   (cdkDragStarted)="disableActionsMenu()"
-							   (cdkDragEnded)="disableActionsMenu()"
-							   [actionsBoxEnabled]="actionBoxEnabled"
-							   [HostedItem]="getBlockByID(tile)"></editor-block-host>
-
-		</div>
-	</div>
-	<editor-block-host style="width: 100%;height: 100%;" [HostedItem]="phBlock1"></editor-block-host> -->
+<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="note-content">	
+	<div #editorBlock (input)="onInput()" (keydown)="keyDown($event)" contenteditable="true"></div>
 </div>

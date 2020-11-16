@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -11,7 +11,7 @@ import {
 
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
 import { MarkdownModule, MarkedOptions, MarkedRenderer } from 'ngx-markdown';
-import { File, FileText, Code, Clock, Tag, Image, List } from 'angular-feather/icons';
+import { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare } from 'angular-feather/icons';
 
 import { MenuModule } from 'app/menu/menu.module';
 import { AuthGuard } from 'app/services/auth/auth.guard';
@@ -21,12 +21,9 @@ import { NotesListComponent } from 'app/notes/notes-list/notes-list.component';
 import { ListOverlayComponent } from 'app/notes/list-overlay/list-overlay.component';
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
 import { BlocksListComponent, BlocksListItem } from 'app/notes/blocks-list/blocks-list.component';
-import { MarkdownEditorComponent } from 'app/components/markdown-editor/markdown-editor.component';
 import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
-import { MarkdownBlockComponent } from 'app/notes/doc-editor/blocks/markdown-block/markdown-block.component';
-import { PlaceholderBlockComponent } from 'app/notes/doc-editor/blocks/placeholder-block/placeholder-block.component';
 
-const icons = { File, FileText, Code, Clock, Tag, Image, List };
+const icons = { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare };
 
 const notesRoutes = [
 	{
@@ -61,6 +58,7 @@ export function markedOptionsFactory(): MarkedOptions {
 }
 
 @NgModule({
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	declarations: [
 		BlocksListItem,
 		DocEditorComponent,
@@ -69,9 +67,6 @@ export function markedOptionsFactory(): MarkedOptions {
 		BlocksListComponent,
 		ListOverlayComponent,
 		BlockListItemComponent,
-		MarkdownBlockComponent,
-		MarkdownEditorComponent,
-		PlaceholderBlockComponent,
 	],
 	imports: [
 		MenuModule,
@@ -94,6 +89,6 @@ export function markedOptionsFactory(): MarkedOptions {
 		RouterModule.forChild(notesRoutes),
 		MarkdownModule.forRoot({ markedOptions: { provide: MarkedOptions, useFactory: markedOptionsFactory } }),
 	],
-	entryComponents: [DocEditorComponent, ListOverlayComponent, BlocksListComponent, BlockListItemComponent, MarkdownBlockComponent, PlaceholderBlockComponent],
+	entryComponents: [DocEditorComponent, ListOverlayComponent, BlocksListComponent, BlockListItemComponent],
 })
 export class NotesModule { }
