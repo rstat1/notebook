@@ -1,10 +1,14 @@
-<div class="page-container" style="background-color: #424242;">
-	<div style="display: flex;flex-direction: row;" class="page-content page-width">
+<div class="page-container" style="background-color: #252525;">
+	<div style="display:flex;flex-direction: row;" class="page-content page-width">
 		<div style="background-color: #1d1d1d;height:100vh;width:373px;">
 			<div style="margin-top: 4px;">
 				<button style="padding: 0px 5px 0px 0px;margin-left:14px;" mat-button (click)="newDocument()">
 					<mat-icon style="vertical-align: text-bottom;padding-top: 3px;color:#A83D3E">add</mat-icon>
 					Add Notebook
+				</button>
+				<button style="padding: 0px 5px 0px 0px;margin-left:14px;" mat-button (click)="newDocument()">
+					<mat-icon style="vertical-align: text-bottom;padding-top: 3px;color:#A83D3E">admin_panel_settings</mat-icon>
+					Settings
 				</button>
 			</div>
 			<span style="display:block;height:92vh;padding-top:20px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
@@ -13,7 +17,7 @@
 				</div>			
 			</span>
 		</div>
-		<div>
+		<div *ngIf="this.activeNotebookID != ''">
 			<div style="background-color: #2e2e2e;height: 100vh;">
 				<div style="display: flex;">
 					<div class="project-list-button" style="width: 146px;" (click)='showMenu("filter", $event)' [class.project-list-button-selected]="showSearch == true">
@@ -21,10 +25,16 @@
 						<span class="project-name">Filter by Tag</span>
 						<mat-icon>expand_more</mat-icon>
 					</div>
-					<button style="padding: 0px 5px 0px 0px" mat-button (click)="newDocument()">
-						<mat-icon style="vertical-align: text-bottom;padding-top: 3px;color:#A83D3E">add</mat-icon>
-						Add Note
-					</button>
+					<span style="display: flex;flex-direction: row-reverse; width: 227px;">
+						<button style="padding: 0px 5px 0px 0px" matTooltipPosition="below" matTooltip="Delete notebook" mat-icon-button>
+							<mat-icon style="vertical-align: text-bottom;padding-top: 3px;color:#A83D3E">delete</mat-icon>
+							<!-- Delete Notebook -->
+						</button>
+						<button style="padding: 0px 5px 0px 0px" mat-icon-button matTooltipPosition="below" matTooltip="Add new page" (click)="newDocument()">
+							<mat-icon style="vertical-align: text-bottom;padding-top: 3px;color:#A83D3E">add</mat-icon>
+							<!-- Add Note -->
+						</button>
+					</span>
 				</div>
 				<div #projects class="dropdown-box" [class.dropdown-shown]="showProjectListMenu == true" [class.dropdown-hidden]="showProjectListMenu == false">
 					<div id="scrollbox" style="height:500px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
@@ -57,20 +67,19 @@
 				</div>				
 				<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="list" style="min-width: 373px;">
 					<div (click)="this.noteClicked(note.id)" class="list-element" [class.selected-note]="this.isActiveNote(note.id)" *ngFor="let note of notes">
-						<!-- <img style="margin-right: 4px;" src="/assets/wiki.png" width="24" height="24" /> -->
 						<div style="flex: 2;">
 							<span style="display: flex;">
 								<i-feather class="md-icon" style="margin-right: 5px;margin-left:2px;" name="file" matTooltipPosition="below" matTooltip="Title"></i-feather>
 								{{note.title}}
 							</span>
 							<mat-chip-list class="chip-list chip-list-list-item">
-								<i-feather class="md-icon" name="tag" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
+								<i-feather class="md-icon" name="tag" matTooltipPosition="below" matTooltip="Tags"></i-feather>
 								<mat-basic-chip style="display: flex;" class="status-chip-list-item" *ngFor="let t of note.tags">
 									<span style="margin-top:1px;">{{getTagValue(t)}}</span>
 								</mat-basic-chip>								
 							</mat-chip-list>
 							<mat-chip-list class="chip-list chip-list-list-item">
-								<i-feather class="md-icon" name="clock" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
+								<i-feather class="md-icon" name="clock" matTooltipPosition="below" matTooltip="Last Edited on"></i-feather>
 								<mat-basic-chip style="display: flex;" class="status-chip-list-item">
 									<span style="margin-top: 1px;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</span>
 								</mat-basic-chip>
@@ -80,10 +89,13 @@
 				</div>
 			</div>
 		</div>
-		<div style="background-color: #424242;" *ngIf="this.activePage != null">
-			<div style="margin: 20px;max-width: 59vw;">
-				<markdown ngPreserveWhitespaces class="task-description"  [data]="this.pageContent"></markdown>
+		<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="background-color:#252525;display: flex; flex: 1;" *ngIf="this.pageContent != ''">
+			<div style="margin: 20px;">
+				<markdown ngPreserveWhitespaces class="editor-element task-description"  [data]="this.pageContent"></markdown>
 			</div>
+		</div>
+		<div *ngIf="this.pageContent == ''">
+
 		</div>
 	</div>
 </div>

@@ -54,10 +54,11 @@ func (api *Routes) InitAPIRoutes() {
 	api.router.Handle("/api/ash/notebook/new/:name", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newnotebook))
 	api.router.Handle("/api/ash/notebook/:nbid", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.pages))
 	api.router.Handle("/api/ash/notebook/:nbid/burn", common.RequestWrapper(api.user.AnyTokenProvided, "DELETE", api.deletenotebook))
-	api.router.Handle("/api/ash/notebook/:nbid/page", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newpage))
+	api.router.Handle("/api/ash/notebook/page", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newpage))
 	api.router.Handle("/api/ash/notebook/:nbid/page/:id", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.pagemetadata))
-	api.router.Handle("/api/ash/notebook/:nbid/page/:id/content", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.page))
-	api.router.Handle("/api/ash/notebook/:nbid/page/:id/ripout", common.RequestWrapper(api.user.AnyTokenProvided, "DELETE", api.ripout))
+	api.router.Handle("/api/ash/notebook/:nbid/ripout/:id", common.RequestWrapper(api.user.AnyTokenProvided, "DELETE", api.ripout))
+	api.router.Handle("/api/ash/notebook/:nbid/pagecontent/:id", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.page))
+	api.router.Handle("/api/ash/notebook/:nbid/withtags", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.setfilter))
 
 	api.router.Handle("/api/ash/tags", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.gettags))
 	api.router.Handle("/api/ash/tags/new", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newtag))
@@ -179,7 +180,7 @@ func (api *Routes) newnotebook(resp http.ResponseWriter, r *http.Request) {
 				Name:  string(content),
 				ID:    strings.TrimSpace(uuid.New().String()),
 				Owner: strings.TrimSpace(username),
-				Pages: []data.PageReference{},
+				Pages: []data.Page{},
 			})
 			common.WriteResponse(resp, 400, ref, err)
 		} else {
@@ -208,11 +209,19 @@ func (api *Routes) deletenotebook(resp http.ResponseWriter, r *http.Request) {
 func (api *Routes) newpage(resp http.ResponseWriter, r *http.Request) {
 	var newPage data.NewPageRequest
 	if api.user.HasPermission(r, "notebook:create") {
-		body, _ := ioutil.ReadAll(r.Body)
-		if err := json.Unmarshal(body, &newPage); err != nil {
+		if err := r.ParseMultipartForm(128 * 1024); err == nil {
+			metadata := r.FormValue("metadata")
+			pageContent := r.FormValue("content")
+			if err := json.Unmarshal([]byte(metadata), &newPage); err != nil {
+				common.WriteFailureResponse(err, resp, "newpage", 500)
+				return
+			}
+			newPage.Content = pageContent
+		} else {
 			common.WriteFailureResponse(err, resp, "newpage", 500)
 			return
 		}
+
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
 			newPage.Metadata.Creator = username
 			newPage.Metadata.ID = uuid.New().String()
@@ -241,6 +250,13 @@ func (api *Routes) pagemetadata(resp http.ResponseWriter, r *http.Request) {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetadata", 401)
 	}
 }
+func (api *Routes) ripout(resp http.ResponseWriter, r *http.Request) {
+	if api.user.HasPermission(r, "notebook:delete") {
+		common.WriteResponse(resp, 400, nil, api.notebookSvc.DeletePage(vestigo.Param(r, "id"), vestigo.Param(r, "nbid")))
+	} else {
+		common.WriteFailureResponse(errors.New("not authorized"), resp, "ripout", 401)
+	}
+}
 func (api *Routes) page(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "notebook:read") {
 		if allowed, err := api.isAccessAllowed(r); allowed {
@@ -257,11 +273,18 @@ func (api *Routes) page(resp http.ResponseWriter, r *http.Request) {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetadata", 401)
 	}
 }
-func (api *Routes) ripout(resp http.ResponseWriter, r *http.Request) {
-	if api.user.HasPermission(r, "notebook:delete") {
-		common.WriteResponse(resp, 400, nil, api.notebookSvc.DeletePage(vestigo.Param(r, "id"), vestigo.Param(r, "nbid")))
+func (api *Routes) setfilter(resp http.ResponseWriter, r *http.Request) {
+	var tagList []string
+	if api.user.HasPermission(r, "notebook:read") {
+		body, _ := ioutil.ReadAll(r.Body)
+		if err := json.Unmarshal(body, &tagList); err != nil {
+			common.WriteFailureResponse(err, resp, "newpage", 500)
+			return
+		}
+		pages, err := api.data.GetPagesWithTags(tagList)
+		common.WriteResponse(resp, 500, pages, err)
 	} else {
-		common.WriteFailureResponse(errors.New("not authorized"), resp, "ripout", 401)
+		common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetadata", 401)
 	}
 }
 func (api *Routes) gettags(resp http.ResponseWriter, r *http.Request) {

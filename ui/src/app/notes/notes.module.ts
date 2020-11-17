@@ -47,6 +47,15 @@ export function markedOptionsFactory(): MarkedOptions {
 	renderer.paragraph = (text: string) => {
 		return '<p class="md-p">' + text + '</p>';
 	};
+	renderer.heading = (text: string, level: 2 | 3 | 4 | 6 | 1 | 5, raw: string, slugger: marked.Slugger) => {
+		switch (level) {
+			case 1:
+				return "<h1>" + text + "</h1><hr/>";
+			default:
+				return "<h" + level + ">" + text + "</h" + level + ">";
+		}
+	}
+
 	return {
 		renderer: renderer,
 		gfm: true,

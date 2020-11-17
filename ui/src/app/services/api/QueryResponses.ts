@@ -12,8 +12,9 @@ export class DeleteToken {
 export class Page {
 	public id: number;
 	public title: string;
-	public layout: string;
 	public tags: PageTag[];
+	public creator: string;
+	public lastEdited: number;
 }
 export class PageTag {
 	public tagId: string;
@@ -23,19 +24,17 @@ export class NotebookReference {
 	public id: string;
 	public name: string;
 }
-export class PageReference {
-	public id: string;
-	public title: string;
+export class NewPageMetadata {
 	public tags: string[];
+	public title: string;
+	public lastEdited: number;
 }
 export class NewPageRequest {
-	public page: Page;
+	public page: NewPageMetadata;
 	public notebookID: string;
-	public content: string;
-	constructor(pageMD: Page, notebook: string, pageContent: string) {
+	constructor(pageMD: NewPageMetadata, notebook: string) {
 		this.page = pageMD;
 		this.notebookID = notebook;
-		this.content = btoa(pageContent);
 	}
 }
 

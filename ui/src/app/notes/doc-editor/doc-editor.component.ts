@@ -1,14 +1,15 @@
 ///<reference path="medium-editor.d.ts" />"
 import * as MediumEditor from 'medium-editor';
 
-import { MatDialogRef } from '@angular/material';
-import { Component, OnInit, ElementRef, ViewChild, ComponentFactoryResolver, Injector, ComponentRef, Type, AfterViewInit } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { Component, ElementRef, ViewChild, ComponentFactoryResolver, Injector, ComponentRef, Type, AfterViewInit, Inject } from '@angular/core';
 
-import { PageTag } from 'app/services/api/QueryResponses';
+import { APIService } from 'app/services/api/api.service';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { ICommandListEntry } from 'app/components/command-list/cmd-list-common';
 import { ListOverlayService } from 'app/notes/list-overlay/list-overlay.service';
 import { BlocksListComponent } from 'app/notes/blocks-list/blocks-list.component';
+import { NewPageMetadata, NewPageRequest, PageTag } from 'app/services/api/QueryResponses';
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
 
 import { MDBoldButton, MDItalicButton, MDStrikeButton } from 'app/notes/doc-editor/markdown-buttons'
@@ -20,9 +21,11 @@ export type BlockComponent<T> = Type<T>;
 	templateUrl: './doc-editor.html',
 	styleUrls: ['./doc-editor.css'],
 })
-export class DocEditorComponent implements OnInit, AfterViewInit {
+export class DocEditorComponent implements AfterViewInit {
 	public text: string = "";
 	public title: string = "";
+	public saveSuccess: boolean;
+	public activeNotebookID: string;
 	public currentDate = new Date();
 	public showTagsPH: boolean = true;
 	public showTitlePH: boolean = true;
@@ -38,10 +41,12 @@ export class DocEditorComponent implements OnInit, AfterViewInit {
 	private overlayVisible: boolean = false;
 	private lastCmdComplete: boolean = false;
 
-	constructor(private resolve: ComponentFactoryResolver, private inject: Injector, private listOverlay: ListOverlayService,
-		private cache: DataCacheService, public dialogRef: MatDialogRef<DocEditorComponent>) { }
+	constructor(@Inject(MAT_DIALOG_DATA) public data: any, private resolve: ComponentFactoryResolver, private inject: Injector,
+		private listOverlay: ListOverlayService, private cache: DataCacheService, public dialogRef: MatDialogRef<DocEditorComponent>,
+		private api: APIService) { }
 
 	ngAfterViewInit(): void {
+		this.activeNotebookID = <string>this.data.activeNotebook;
 		this.mdEditor = new MediumEditor(this.editor.nativeElement, {
 			toolbar: {
 				buttons: ["md-bold", "md-italic", "md-strike"]
@@ -61,10 +66,6 @@ export class DocEditorComponent implements OnInit, AfterViewInit {
 				'MDItalic': new MDItalicButton(),
 			}
 		});
-	}
-
-	ngOnInit() {
-
 	}
 	showListOfBlocks(blockID: string): void {
 		this.showListOverlay(this.editor.nativeElement);
@@ -192,8 +193,6 @@ export class DocEditorComponent implements OnInit, AfterViewInit {
 						itemTemplate: this.createBlockListItem("list", value.tagValue, "")
 					});
 				});
-			} else {
-
 			}
 		});
 
@@ -204,6 +203,30 @@ export class DocEditorComponent implements OnInit, AfterViewInit {
 	}
 	public close() {
 		this.dialogRef.close();
+	}
+	public save() {
+		let newPage: NewPageRequest;
+		let newPageForm: FormData = new FormData();
+		let pageMD: NewPageMetadata = new NewPageMetadata();
+
+		pageMD.title = this.title;
+		pageMD.tags = new Array<string>();
+		this.tags.forEach((value: PageTag) => {
+			pageMD.tags.push(value.tagId);
+		});
+		pageMD.lastEdited = Date.now();
+
+		newPage = new NewPageRequest(pageMD, this.activeNotebookID);
+
+		newPageForm.append("metadata", JSON.stringify(newPage))
+		newPageForm.append("content", this.editor.nativeElement.innerText);
+
+		this.api.NewPage(newPageForm).subscribe(resp => {
+			if (resp.response == "success") {
+				this.saveSuccess = true;
+				this.dialogRef.close(true);
+			}
+		})
 	}
 	public addBlock() {
 		this.showListOverlay();

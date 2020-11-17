@@ -2,13 +2,17 @@ import { Injectable } from '@angular/core';
 import { Observable, ReplaySubject } from 'rxjs';
 
 import { APIService } from 'app/services/api/api.service';
-import { NotebookReference, PageReference, PageTag } from 'app/services/api/QueryResponses';
+import { NotebookReference, Page, PageTag } from 'app/services/api/QueryResponses';
 
 @Injectable({ providedIn: 'root' })
 export class DataCacheService {
 	public tagMap: Map<string, string>;
 	public tags: PageTag[] = Array<PageTag>();
+	public currentPageList: Page[] = Array<Page>();
+
+	private currentNBID: string = "";
 	private currentNotebook: NotebookReference;
+	private curPageLstSubject: ReplaySubject<Page[]>;
 	private tagsListSubject: ReplaySubject<PageTag[]>;
 	private notebooksSubject: ReplaySubject<NotebookReference[]>;
 	private notebooks: NotebookReference[] = Array<NotebookReference>();
@@ -16,8 +20,10 @@ export class DataCacheService {
 	constructor(private api: APIService) {
 		this.tags = new Array<PageTag>();
 		this.tagMap = new Map<string, string>();
+		this.currentPageList = new Array<Page>();
 		this.notebooks = new Array<NotebookReference>();
 
+		this.curPageLstSubject = new ReplaySubject<Page[]>(1);
 		this.tagsListSubject = new ReplaySubject<PageTag[]>(1);
 		this.notebooksSubject = new ReplaySubject<NotebookReference[]>(1);
 	}
@@ -45,6 +51,20 @@ export class DataCacheService {
 			this.notebooksSubject.next(this.notebooks);
 		}
 		return this.notebooksSubject.asObservable();
+	}
+	public getPages(notebookID: string): Observable<Page[]> {
+		if (this.currentPageList.length == 0 || notebookID != this.currentNBID) {
+			this.api.GetPages(notebookID).subscribe(resp => {
+				if (resp.status == "success") {
+					this.currentNBID = notebookID;
+					this.currentPageList = JSON.parse(resp.response);
+					this.curPageLstSubject.next(this.currentPageList);
+				}
+			})
+		} else {
+			this.curPageLstSubject.next(this.currentPageList);
+		}
+		return this.curPageLstSubject.asObservable();
 	}
 	public getTagMap(): Map<string, string> {
 		return this.tagMap;

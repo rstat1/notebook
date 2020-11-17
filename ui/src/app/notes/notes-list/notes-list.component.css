@@ -1,3 +1,6 @@
+pre > code {
+	background-color: #1d1d1d;
+}
 .page-title {
     text-transform: capitalize;
     font-size: 24pt;
@@ -148,3 +151,12 @@
 	margin-left:4px;
 	margin-right:4px;
 }
+.task-description {
+    margin-bottom: 10px;
+    display: block;
+    padding-bottom: 20px;
+}
+.editor-element {
+	min-height: 202px;
+}
+

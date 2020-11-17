@@ -29,9 +29,9 @@ type DeleteAPIKeyRequest struct {
 
 //NewPageRequest ...
 type NewPageRequest struct {
-	Metadata        Page   `json:"page"`
-	NotebookID      string `json:"notebookID"`
-	ContentAsBase64 string `json:"content"`
+	Metadata   Page   `json:"page"`
+	Content    string `json:"content"`
+	NotebookID string `json:"notebookID"`
 }
 
 //NewAPIKeyRequest ...
@@ -63,10 +63,10 @@ type DeleteAPIKeyResponse struct {
 
 //Notebook ...
 type Notebook struct {
-	ID    string          `json:"id"`
-	Name  string          `json:"name"`
-	Owner string          `json:"owner"`
-	Pages []PageReference `json:"pages"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Owner string `json:"owner"`
+	Pages []Page `json:"pages"`
 }
 
 //Notebooks ...
@@ -81,13 +81,6 @@ type Page struct {
 	Title      string   `json:"title"`
 	Creator    string   `json:"creator"`
 	LastEdited int64    `json:"lastEdited"`
-}
-
-//PageReference ...
-type PageReference struct {
-	ID    string   `json:"id"`
-	Title string   `json:"title"`
-	Tags  []string `json:"tags"`
 }
 
 //NotebookReference ...
@@ -125,4 +118,8 @@ type AuthenticatedUsers struct {
 type AuthInfo struct {
 	AuthenticatedUserRoles []AuthenticatedUserRoles `json:"authenticatedUserRoles"`
 	AuthenticatedUsers     []AuthenticatedUsers     `json:"authenticatedUsers"`
+}
+
+type TagFilterResult []struct {
+	Pages []Page `json:"pages"`
 }

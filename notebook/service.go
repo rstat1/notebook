@@ -1,7 +1,6 @@
 package notebook
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -31,7 +30,7 @@ func NewNBServiceAPI(db *data.DataStore, vault *crypto.VaultKMS) *ServiceAPI {
 }
 
 //GetPages ...
-func (notesAPI *ServiceAPI) GetPages(notebookID string) ([]data.PageReference, error) {
+func (notesAPI *ServiceAPI) GetPages(notebookID string) ([]data.Page, error) {
 	return notesAPI.data.GetContentsOfNotebook(notebookID)
 }
 
@@ -53,7 +52,7 @@ func (notesAPI *ServiceAPI) NewPage(page data.NewPageRequest) error {
 		return common.LogError("data.IsValidTagID", errors.New("One or more of the specified tags is invalid"))
 	}
 
-	if err := notesAPI.writePageContentToDisk(page.ContentAsBase64, page.Metadata.ID, page.NotebookID); err != nil {
+	if err := notesAPI.writePageContentToDisk(page.Content, page.Metadata.ID, page.NotebookID); err != nil {
 		return common.LogError("writePageContentToDisk", err)
 	}
 
@@ -97,7 +96,7 @@ func (notesAPI *ServiceAPI) DeletePage(pageID, notebookID string) error {
 		common.LogError("", os.Remove(wd+"/notebooks/"+notebookID+"/"+pageID))
 		return notesAPI.vaultClient.DeleteKeyFromKV(notebookID + "/" + pageID)
 	} else {
-		return err
+		return common.LogError("", err)
 	}
 }
 
@@ -119,7 +118,7 @@ func (notesAPI *ServiceAPI) DeleteNotebook(id string) error {
 		for _, pageRef := range pages {
 			err = notesAPI.vaultClient.DeleteKeyFromKV(id + "/" + pageRef.ID)
 			if err != nil {
-				return err
+				return common.LogError("", err)
 			}
 		}
 		return os.RemoveAll(wd + "/notebooks/" + id)
@@ -128,13 +127,10 @@ func (notesAPI *ServiceAPI) DeleteNotebook(id string) error {
 	}
 }
 
-func (notesAPI *ServiceAPI) writePageContentToDisk(pageContent, pageID, notebookID string) error {
+func (notesAPI *ServiceAPI) writePageContentToDisk(content, pageID, notebookID string) error {
 	wd, _ := os.Getwd()
 	path := wd + "/notebooks/" + notebookID + "/" + pageID
-	content, err := base64.RawStdEncoding.DecodeString(pageContent)
-	if err != nil {
-		return err
-	}
+
 	if vKey, vSealed, err := notesAPI.vaultClient.GenerateKey("notebook", crypto.Context{"pageID": pageID}); err == nil {
 		cryptoKey := crypto.GenerateKey(vKey[:], "notes/"+notebookID+"/"+pageID)
 		sealed, _ := cryptoKey.Seal(vKey[:], notebookID+"/"+pageID)

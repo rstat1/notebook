@@ -45,7 +45,7 @@ export class APIService {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/page/" + pageID));
 	}
 	public GetPageContent(pageID: string, notebookID: string): Observable<APIResponse> {
-		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/page/" + pageID + "/content"));
+		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/pagecontent/" + pageID));
 	}
 	public GetPages(notebookID: string): Observable<APIResponse> {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID));
@@ -53,8 +53,8 @@ export class APIService {
 	public NewAPIToken(token: APIToken): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("apikey/new"), JSON.stringify(token));
 	}
-	public NewPage(page: NewPageRequest): Observable<APIResponse> {
-		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + page.notebookID + "/page"), JSON.stringify(page));
+	public NewPage(newPage: FormData): Observable<APIResponse> {
+		return this.postFormRequest(ConfigService.GetAPIURLFor("notebook/page"), newPage)
 	}
 	public NewTag(tagName: string): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("tags/new"), tagName);
@@ -66,7 +66,7 @@ export class APIService {
 		return this.deleteRequest<DeleteAPITokenRequest>(new DeleteAPITokenRequest(tokenID, creator), "apikey");
 	}
 	public DeletePage(pageID: string, notebookID: string): Observable<APIResponse> {
-		return this.http.delete<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/page/" + pageID + "/ripout"));
+		return this.http.delete<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/ripout/" + pageID));
 	}
 	public DeleteNotebook(notebookID: string): Observable<APIResponse> {
 		return this.http.delete<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/burn"));
@@ -80,5 +80,8 @@ export class APIService {
 			body: requestInfo,
 		};
 		return this.http.request<APIResponse>("delete", ConfigService.GetAPIURLFor(route), options);
+	}
+	private postFormRequest(url: string, body: FormData): Observable<APIResponse> {
+		return this.http.post<APIResponse>(url, body);
 	}
 }

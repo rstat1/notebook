@@ -7,7 +7,7 @@ import { Component, OnInit, AfterViewInit, ChangeDetectorRef, NgZone, ViewChild,
 import { APIService } from 'app/services/api/api.service';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
-import { PageTag, Page, NotebookReference, PageReference } from 'app/services/api/QueryResponses';
+import { PageTag, Page, NotebookReference } from 'app/services/api/QueryResponses';
 import { NotebookListItemComponent } from 'app/components/notebook-list-item/notebook-list-item.component';
 
 @Component({
@@ -26,7 +26,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	public showSearch: boolean = false;
 	public currentDate = new Date();
 	public showProjectListMenu: boolean = false;
-	public notes: PageReference[] = new Array<PageReference>();
+	public notes: Page[] = new Array<Page>();
 	public notebooks: NotebookReference[] = new Array<NotebookReference>();
 	public docTags: PageTag[] = Array<PageTag>();
 	public docTagsMap: Map<string, string> = new Map();
@@ -39,7 +39,6 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		autoHideScrollbar: true,
 	};
 	public selectedTags: FormControl = new FormControl(new Set());
-	public activePage: PageReference = null;
 	public pageContent: string = "";
 
 	constructor(private router: Router, private route: ActivatedRoute, private api: APIService, private focusMon: FocusMonitor,
@@ -50,25 +49,20 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			console.log(params)
 			if (params.nbid != "all" && params.nbid != undefined) {
 				this.activeNotebookID = params.nbid;
-				this.api.GetPages(params.nbid).subscribe(resp => {
-					this.notes = JSON.parse(resp.response);
+				this.cache.getPages(params.nbid).subscribe(resp => {
+					this.notes = resp;
 				});
 			} else {
 				this.notes = Array();
 				this.activeNotebookID = "";
 			}
-			if (this.activeNotebookID != "" && params.page != "") {
+			if (this.activeNotebookID !== "" && params.page !== undefined) {
 				this.activePageID = params.page;
-				this.api.GetPageMetadata(this.activePageID, this.activeNotebookID).subscribe(resp => {
+				this.api.GetPageContent(this.activePageID, this.activeNotebookID).subscribe(resp => {
 					if (resp.status == "success") {
-						this.activePage = JSON.parse(resp.response);
-						this.api.GetPageContent(this.activePageID, this.activeNotebookID).subscribe(resp => {
-							if (resp.status == "success") {
-								this.pageContent = JSON.parse(resp.response);
-							}
-						})
+						this.pageContent = JSON.parse(resp.response);
 					}
-				});
+				})
 			}
 		});
 		this.cache.getNotebookList().subscribe(resp => {
@@ -90,8 +84,12 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		}));
 	}
 	ngOnDestroy(): void {
-		this.focusMon.stopMonitoring(this.projectsDropdown);
-		this.focusMon.stopMonitoring(this.filterDropdown);
+		if (this.projectsDropdown) {
+			this.focusMon.stopMonitoring(this.projectsDropdown);
+		}
+		if (this.filterDropdown) {
+			this.focusMon.stopMonitoring(this.filterDropdown);
+		}
 	}
 	//thanks andrewseguin for this stackblitz thing: https://stackblitz.com/edit/mat-chip-selected-with-set-bug-lmuuab
 	public clicked(id: number) {
@@ -150,7 +148,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			width: '1050px',
 			disableClose: true,
 			autoFocus: true,
-			data: {},
+			data: { activeNotebook: this.activeNotebookID },
 		});
 	}
 	private handleProjectListUnfocus(e: FocusEvent) {
