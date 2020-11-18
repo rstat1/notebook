@@ -88,6 +88,11 @@ func (kms *VaultKMS) GetDBCredentials() (string, string, error) {
 		credsEndpoint += "-prod"
 	}
 	if creds, err := kms.client.Logical().Read(credsEndpoint); err == nil {
+		credRenewer, err := kms.client.NewRenewer(&vault.RenewerInput{Secret: creds})
+		if err != nil {
+			return "", "", err
+		}
+		kms.dbCredsRenewer(credRenewer)
 		return creds.Data["username"].(string), creds.Data["password"].(string), nil
 	} else {
 		return "", "", err
@@ -199,6 +204,22 @@ func (kms *VaultKMS) RenewToken() *vault.Secret {
 	return nil
 }
 
+func (kms *VaultKMS) dbCredsRenewer(renewer *vault.Renewer) {
+	go func() {
+		renewer.Renew()
+		defer renewer.Stop()
+		for {
+			select {
+			case err := <-renewer.DoneCh():
+				if err != nil {
+					common.LogError("dbCredsRenewer", err)
+				}
+			case renewal := <-renewer.RenewCh():
+				common.LogInfo("timestamp", renewal.RenewedAt, "renewal successful")
+			}
+		}
+	}()
+}
 func (kms *VaultKMS) tokenRenewalTimer() {
 	go func() {
 		for {

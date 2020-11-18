@@ -21,9 +21,6 @@ export class NotesRootComponent implements OnInit {
 		private matIconRegistry: MatIconRegistry, private domSanitizer: DomSanitizer, private cache: DataCacheService) { }
 
 	ngOnInit(): void {
-		this.cache.getNotebookList().subscribe(resp => {
-			this.notebooks = resp;
-		})
 		this.matIconRegistry.addSvgIconLiteral("feather_book", this.domSanitizer.bypassSecurityTrustHtml(Book));
 	}
 	public showList() {

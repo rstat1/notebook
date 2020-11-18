@@ -1,5 +1,5 @@
 import { FormControl } from '@angular/forms';
-import { MatDialog } from '@angular/material';
+import { MatDialog, MatSnackBar } from '@angular/material';
 import { FocusMonitor } from "@angular/cdk/a11y";
 import { Router, ActivatedRoute } from '@angular/router';
 import { Component, OnInit, AfterViewInit, ChangeDetectorRef, NgZone, ViewChild, ElementRef, OnDestroy } from '@angular/core';
@@ -8,7 +8,8 @@ import { APIService } from 'app/services/api/api.service';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
 import { PageTag, Page, NotebookReference } from 'app/services/api/QueryResponses';
-import { NotebookListItemComponent } from 'app/components/notebook-list-item/notebook-list-item.component';
+import { AreYouSureDialogComponent } from 'app/notes/notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
+import { NewNotebookDialogComponent } from './new-notebook-dialog/new-notebook-dialog.component';
 
 @Component({
 	selector: 'app-notes-list',
@@ -16,20 +17,19 @@ import { NotebookListItemComponent } from 'app/components/notebook-list-item/not
 	styleUrls: ['./notes-list.component.css']
 })
 export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
-	@ViewChild('projects') projectsDropdown: ElementRef<HTMLElement>;
 	@ViewChild('search') filterDropdown: ElementRef<HTMLElement>;
 
-	public activePageID: string = "";
 	public filterText: string = "";
+	public activePageID: string = "";
 	public activeNotebookID: string;
+	public activeNotebokName: string;
 	public haveFilter: boolean = false;
 	public showSearch: boolean = false;
-	public currentDate = new Date();
-	public showProjectListMenu: boolean = false;
 	public notes: Page[] = new Array<Page>();
-	public notebooks: NotebookReference[] = new Array<NotebookReference>();
+	public showProjectListMenu: boolean = false;
 	public docTags: PageTag[] = Array<PageTag>();
 	public docTagsMap: Map<string, string> = new Map();
+	public notebooks: NotebookReference[] = new Array<NotebookReference>();
 	public filteredProjects: NotebookReference[] = new Array<NotebookReference>();
 	public scrollbarOptions = {
 		scrollInertia: 0,
@@ -42,14 +42,14 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	public pageContent: string = "";
 
 	constructor(private router: Router, private route: ActivatedRoute, private api: APIService, private focusMon: FocusMonitor,
-		private cdr: ChangeDetectorRef, private zone: NgZone, private dialog: MatDialog, private cache: DataCacheService) { }
+		private cdr: ChangeDetectorRef, private zone: NgZone, private dialog: MatDialog, private cache: DataCacheService,
+		private snackBar: MatSnackBar) { }
 
 	ngOnInit() {
 		this.route.params.subscribe((params) => {
-			console.log(params)
 			if (params.nbid != "all" && params.nbid != undefined) {
 				this.activeNotebookID = params.nbid;
-				this.cache.getPages(params.nbid).subscribe(resp => {
+				this.cache.getPages(params.nbid, false).subscribe(resp => {
 					this.notes = resp;
 				});
 			} else {
@@ -65,7 +65,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 				})
 			}
 		});
-		this.cache.getNotebookList().subscribe(resp => {
+		this.cache.getNotebookList(false).subscribe(resp => {
 			this.notebooks = resp;
 		})
 		this.cache.getTagList().subscribe(resp => {
@@ -74,22 +74,38 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		});
 	}
 	ngAfterViewInit() {
-		this.focusMon.monitor(this.projectsDropdown, true).subscribe(o => this.zone.run(() => {
-			this.cdr.markForCheck();
-			if (o == null) { this.showProjectListMenu = false; }
-		}));
-		this.focusMon.monitor(this.filterDropdown, true).subscribe(o => this.zone.run(() => {
-			this.cdr.markForCheck();
-			if (o == null) { this.showSearch = false; }
-		}));
+		if (this.filterDropdown) {
+			this.focusMon.monitor(this.filterDropdown, true).subscribe(o => this.zone.run(() => {
+				this.cdr.markForCheck();
+				if (o == null) { this.showSearch = false; }
+			}));
+		}
 	}
 	ngOnDestroy(): void {
-		if (this.projectsDropdown) {
-			this.focusMon.stopMonitoring(this.projectsDropdown);
-		}
 		if (this.filterDropdown) {
 			this.focusMon.stopMonitoring(this.filterDropdown);
 		}
+	}
+	public showMenu(which: string, event: MouseEvent) {
+		if (which == "filter") {
+			this.showSearch = !this.showSearch;
+			this.showProjectListMenu = false;
+		}
+	}
+	public notebookClicked(notebook: NotebookReference) {
+		this.activePageID = "";
+		this.cache.setCurrentNotebook(notebook);
+		this.router.navigate(["nb", notebook.id]);
+	}
+	public noteClicked(id: string) {
+		if (this.activePageID != "") {
+			this.router.navigate(["../../page", id], { relativeTo: this.route });
+		} else {
+			this.router.navigate(["page", id], { relativeTo: this.route });
+		}
+	}
+	public newDocument() {
+		this.dialog.open(DocEditorComponent, { width: '1050px', disableClose: true, autoFocus: true, data: { activeNotebook: this.activeNotebookID } });
 	}
 	//thanks andrewseguin for this stackblitz thing: https://stackblitz.com/edit/mat-chip-selected-with-set-bug-lmuuab
 	public clicked(id: number) {
@@ -97,6 +113,71 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		const removeChip = () => { this.selectedTags.value.delete(id); };
 		this.selectedTags.value.has(id) ? removeChip() : addChip();
 		var tagsSelected: Array<number> = Array.from(this.selectedTags.value);
+	}
+	public addNotebook() {
+		var notebookName = this.dialog.open(NewNotebookDialogComponent, { width: '500px', disableClose: true, autoFocus: true, data: {} });
+		notebookName.afterClosed().subscribe(newName => {
+			if (newName != "") {
+				this.api.NewNotebook(newName).subscribe(resp => {
+					if (resp.status == "success") {
+						this.showMessage("Enjoy your shiny new notebook!");
+						this.cache.getNotebookList(true).subscribe(resp => {
+							this.notebooks = resp;
+						});
+					}
+				}, error => { this.showMessage("Failed: " + error); })
+			}
+		})
+	}
+	public deletePage(pageID: string, pageTitle: string) {
+		var areYouSure = this.dialog.open(AreYouSureDialogComponent, {
+			width: '500px',
+			disableClose: true,
+			data: { name: pageTitle, deleteType: "page" }
+		});
+		areYouSure.afterClosed().subscribe(result => {
+			if (result) {
+				this.api.DeletePage(pageID, this.activeNotebookID).subscribe(resp => {
+					if (resp.status == "success") {
+						this.showMessage("Successfully deleted: " + pageTitle);
+						this.cache.getPages(this.activeNotebookID, true).subscribe(resp => { this.notes = resp; });
+						if (pageID == this.activePageID) {
+							this.router.navigate(["../../"], { relativeTo: this.route });
+						}
+					}
+				}, error => { this.showMessage("Failed: " + error); })
+			}
+		})
+	}
+	public deleteNotebook() {
+		var notebookName: string
+		this.notebooks.forEach((notebookRef) => {
+			if (notebookRef.id == this.activeNotebookID) {
+				notebookName = notebookRef.name;
+				return;
+			}
+		})
+		if (notebookName == null) {
+			this.showMessage("Hmm...");
+		} else {
+			var areYouSure = this.dialog.open(AreYouSureDialogComponent, {
+				width: '500px',
+				disableClose: true,
+				data: { name: notebookName, deleteType: "notebook" }
+			});
+			areYouSure.afterClosed().subscribe(result => {
+				if (result) {
+					this.api.DeleteNotebook(this.activeNotebookID).subscribe(resp => {
+						if (resp.status) {
+							this.activeNotebookID = "";
+							this.showMessage(notebookName + " burnt to a crisp!");
+							this.cache.getNotebookList(true).subscribe(resp => { });
+							this.router.navigate(["nb"]);
+						}
+					})
+				}
+			}, error => { this.showMessage("Failed: " + error); });
+		}
 	}
 	public isActiveNB(id: string): boolean {
 		return id === this.activeNotebookID;
@@ -116,40 +197,16 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			this.filteredProjects = this.notebooks;
 		}
 	}
-	public showMenu(which: string, event: MouseEvent) {
-		if (which == "projects") {
-			this.showProjectListMenu = !this.showProjectListMenu;
-			this.showSearch = false;
-			if (this.showProjectListMenu) {
-				this.projectsDropdown.nativeElement.focus();
-			}
-		}
-		else if (which == "filter") {
-			this.showSearch = !this.showSearch;
-			this.showProjectListMenu = false;
-		}
-	}
-	public notebookClicked(notebook: NotebookReference) {
-		this.activePageID = "";
-		this.router.navigate(["nb", notebook.id]);
-	}
-	public noteClicked(id: string) {
-		if (this.activePageID != "") {
-			this.router.navigate(["../../page", id], { relativeTo: this.route });
-		} else {
-			this.router.navigate(["page", id], { relativeTo: this.route });
-		}
-	}
+
 	public getInitials(projectName: string) {
 		return projectName.substring(0, 2);
 	}
-	public newDocument() {
-		this.dialog.open(DocEditorComponent, {
-			width: '1050px',
-			disableClose: true,
-			autoFocus: true,
-			data: { activeNotebook: this.activeNotebookID },
-		});
+	private showMessage(message: string) {
+		this.snackBar.open(message, "", {
+			duration: 3000,
+			horizontalPosition: "right",
+			verticalPosition: "top"
+		})
 	}
 	private handleProjectListUnfocus(e: FocusEvent) {
 		let container = document.getElementById("projects-list-dropdown");

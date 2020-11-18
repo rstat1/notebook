@@ -22,6 +22,7 @@ export class DataCacheService {
 		this.tagMap = new Map<string, string>();
 		this.currentPageList = new Array<Page>();
 		this.notebooks = new Array<NotebookReference>();
+		this.currentNotebook = new NotebookReference();
 
 		this.curPageLstSubject = new ReplaySubject<Page[]>(1);
 		this.tagsListSubject = new ReplaySubject<PageTag[]>(1);
@@ -30,20 +31,27 @@ export class DataCacheService {
 	public getTagList(): Observable<PageTag[]> {
 		if (this.tags.length == 0) {
 			this.api.GetTags().subscribe(resp => {
-				this.tags = JSON.parse(resp.response);
-				this.tags.forEach(p => {
-					this.tagMap.set(p.tagId, p.tagValue);
-				});
+				var tags = JSON.parse(resp.response);
+				if (tags != undefined) {
+					this.tags = tags;
+					this.tags.forEach(p => {
+						this.tagMap.set(p.tagId, p.tagValue);
+					});
+				}
 				this.tagsListSubject.next(this.tags);
 			});
 		}
 		return this.tagsListSubject.asObservable();
 	}
-	public getNotebookList(): Observable<NotebookReference[]> {
-		if (this.notebooks.length == 0) {
+	public getNotebookList(reset: boolean): Observable<NotebookReference[]> {
+		if (reset) { this.notebooks = new Array<NotebookReference>(); }
+		if (this.notebooks == undefined || this.notebooks.length == 0) {
 			this.api.GetNotebookRefs().subscribe(resp => {
 				if (resp.status == "success") {
-					this.notebooks = JSON.parse(resp.response);
+					var notebooksList = JSON.parse(resp.response);
+					if (notebooksList != undefined) {
+						this.notebooks = notebooksList;
+					}
 					this.notebooksSubject.next(this.notebooks);
 				}
 			})
@@ -52,7 +60,8 @@ export class DataCacheService {
 		}
 		return this.notebooksSubject.asObservable();
 	}
-	public getPages(notebookID: string): Observable<Page[]> {
+	public getPages(notebookID: string, reset: boolean): Observable<Page[]> {
+		if (reset) { this.currentPageList = new Array<Page>(); }
 		if (this.currentPageList.length == 0 || notebookID != this.currentNBID) {
 			this.api.GetPages(notebookID).subscribe(resp => {
 				if (resp.status == "success") {
@@ -71,6 +80,6 @@ export class DataCacheService {
 	}
 	public getCurrentNotebook(): NotebookReference { return this.currentNotebook; }
 	public setCurrentNotebook(notebook: NotebookReference) {
-		this.currentNotebook = notebook;
+		Object.assign(this.currentNotebook, notebook);
 	}
 }

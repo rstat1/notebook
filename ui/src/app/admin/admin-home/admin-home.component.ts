@@ -1,7 +1,6 @@
 import { MatDialog } from '@angular/material';
 import { Component, OnInit } from '@angular/core';
 
-import { MenuService } from 'app/services/menu.service';
 import { APIService } from 'app/services/api/api.service';
 import { AuthService } from 'app/services/auth/auth.service';
 
@@ -22,8 +21,7 @@ export class AdminHomeComponent implements OnInit {
 	public backupStatus: string;
 	public backupDate: string;
 
-	constructor(private auth: AuthService, public menu: MenuService, public api: APIService,
-		private dialog: MatDialog,) { }
+	constructor(private auth: AuthService, public api: APIService, private dialog: MatDialog,) { }
 
 	ngOnInit() {
 

@@ -11,7 +11,6 @@ import { MatRadioModule } from '@angular/material/radio';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AuthGuard } from 'app/services/auth/auth.guard';
-import { MenuModule } from 'app/menu/menu.module';
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
 import { AdminRootComponent } from 'app/admin/admin-root/admin-root.component';
 import { AdminHomeComponent } from 'app/admin/admin-home/admin-home.component';
@@ -33,30 +32,8 @@ const adminRoutes: Routes = [
 	}
 ];
 
-const adminMenuItems = {
-	Items: [
-		//App
-		{
-			ItemTitle: "Home", ItemSubtext: "Return to home page", Icon: "settings",
-			Category: "App", ActionName: "settings", RequiresRoot: false, MenuType: "admin"
-		},
-		{
-			ItemTitle: "Access Tokens", ItemSubtext: "Create an access token for API access", Icon: "key",
-			Category: "App", ActionName: "tokens", RequiresRoot: false, MenuType: "admin"
-		},
-		//Migration
-		{
-			ItemTitle: "Import Projects", ItemSubtext: "Import all projects from another service (ie. GitLab).",
-			Icon: "import", Category: "Migration", ActionName: "project-import", RequiresRoot: true,
-			MenuType: "admin"
-		}
-
-	]
-};
-
 @NgModule({
 	imports: [
-		MenuModule,
 		FormsModule,
 		CommonModule,
 		MatCardModule,
@@ -76,7 +53,6 @@ const adminMenuItems = {
 		MatProgressSpinnerModule,
 		MalihuScrollbarModule.forRoot(),
 		RouterModule.forChild(adminRoutes),
-		MenuModule.forChild(adminMenuItems),
 	],
 	declarations: [
 		AdminRootComponent,

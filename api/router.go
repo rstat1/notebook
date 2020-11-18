@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -51,7 +50,7 @@ func (api *Routes) InitAPIRoutes() {
 
 	api.router.Handle("/api/ash/notebooks", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.notebooks))
 
-	api.router.Handle("/api/ash/notebook/new/:name", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newnotebook))
+	api.router.Handle("/api/ash/notebook/new", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newnotebook))
 	api.router.Handle("/api/ash/notebook/:nbid", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.pages))
 	api.router.Handle("/api/ash/notebook/:nbid/burn", common.RequestWrapper(api.user.AnyTokenProvided, "DELETE", api.deletenotebook))
 	api.router.Handle("/api/ash/notebook/page", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newpage))
@@ -170,19 +169,22 @@ func (api *Routes) notebooks(resp http.ResponseWriter, r *http.Request) {
 func (api *Routes) newnotebook(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "notebook:create") {
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
-			common.LogDebug("name", vestigo.Param(r, "name"), "")
-			content, err := base64.RawURLEncoding.DecodeString(vestigo.Param(r, "name"))
+			notebookName, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				common.WriteFailureResponse(err, resp, "newnotebook", 500)
 				return
 			}
-			ref, err := api.notebookSvc.NewNotebook(data.Notebook{
-				Name:  string(content),
-				ID:    strings.TrimSpace(uuid.New().String()),
-				Owner: strings.TrimSpace(username),
-				Pages: []data.Page{},
-			})
-			common.WriteResponse(resp, 400, ref, err)
+			if string(notebookName) == "" {
+				common.WriteFailureResponse(errors.New("you can't have a nameless notebook"), resp, "newnotebook", 400)
+			} else {
+				ref, err := api.notebookSvc.NewNotebook(data.Notebook{
+					Name:  string(notebookName),
+					ID:    strings.TrimSpace(uuid.New().String()),
+					Owner: strings.TrimSpace(username),
+					Pages: []data.Page{},
+				})
+				common.WriteResponse(resp, 400, ref, err)
+			}
 		} else {
 			common.WriteFailureResponse(err, resp, "newnotebook", 500)
 		}

@@ -1,0 +1,13 @@
+<h2 *ngIf="this.enteredName == ''" mat-dialog-title>New notebook</h2>
+<h2 *ngIf="this.enteredName != ''" mat-dialog-title>{{this.enteredName}}</h2>
+<div mat-dialog-content>
+    <p>So you want a new new notebook huh? Well enter a name that you haven't used before below and I'll give you one.</p>
+    <mat-form-field style="width: 252px;margin: 10px auto; display: block;" id="login-register-text-box">
+        <input [(ngModel)]="enteredName" matInput placeholder="Name" name="project" tabindex="0" required>
+    </mat-form-field>
+    <span style="display:block;color:#f44336;" *ngIf="!enteredNameProperly">{{errorMessage}}</span>
+</div>
+<div mat-dialog-actions style="float:right;margin-bottom: 0px;">
+    <button mat-button (click)="close()">Cancel</button>
+    <button mat-raised-button style="background-color:#A83D3E" (click)="save()" tabindex="1">Save</button>
+</div>

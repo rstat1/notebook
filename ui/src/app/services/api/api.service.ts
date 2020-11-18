@@ -60,7 +60,7 @@ export class APIService {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("tags/new"), tagName);
 	}
 	public NewNotebook(name: string): Observable<APIResponse> {
-		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebooks/new/" + btoa(name)), null);
+		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebook/new"), name);
 	}
 	public DeleteAPIToken(tokenID: string, creator: string): Observable<APIResponse> {
 		return this.deleteRequest<DeleteAPITokenRequest>(new DeleteAPITokenRequest(tokenID, creator), "apikey");

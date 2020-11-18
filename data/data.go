@@ -44,7 +44,6 @@ func (data *DataStore) ConnectToMongoDB() error {
 				return err
 			}
 			data.mongo = mongoClient
-			data.dbCredentialRefresh()
 			data.db = data.mongo.Database(common.CurrentConfig.DBName, nil)
 		} else {
 			return err
@@ -435,24 +434,24 @@ func (data *DataStore) checkConnection() error {
 	return nil
 }
 func (data *DataStore) dbCredentialRefresh() {
-	go func() {
-		for {
-			if !data.stopCredRefresh {
-				select {
-				case <-time.After(1 * time.Hour):
-					var result ConnectionStatus
-					var command bson.D
-					command = bson.D{{"connectionStatus", 1}}
-					r := data.db.RunCommand(context.Background(), command)
-					r.Decode(&result)
-					if result.AuthInfo.AuthenticatedUsers == nil {
-						data.mongo.Disconnect(context.Background())
-						common.LogError("", data.ConnectToMongoDB())
-					}
-				}
-			} else {
-				break
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		if !data.stopCredRefresh {
+	// 			select {
+	// 			case <-time.After(1 * time.Hour):
+	// 				var result ConnectionStatus
+	// 				var command bson.D
+	// 				command = bson.D{{"connectionStatus", 1}}
+	// 				r := data.db.RunCommand(context.Background(), command)
+	// 				r.Decode(&result)
+	// 				if result.AuthInfo.AuthenticatedUsers == nil {
+	// 					data.mongo.Disconnect(context.Background())
+	// 					common.LogError("", data.ConnectToMongoDB())
+	// 				}
+	// 			}
+	// 		} else {
+	// 			break
+	// 		}
+	// 	}
+	// }()
 }

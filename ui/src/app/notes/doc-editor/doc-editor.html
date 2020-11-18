@@ -3,36 +3,37 @@
 		<div style="display: flex;margin-right: 10px;margin-bottom: 6px;">
 			<i-feather style="color:#A83D3E" name="file" matTooltipPosition="below" matTooltip="Title"></i-feather>
 			<span [class.placeholder-text-visible]="showTitlePH == true"
-			  [class.placeholder-text-invisible]="showTitlePH == false"
-			  class="placeholder-text">Type title:"" and press enter to set the title</span>
+				  [class.placeholder-text-invisible]="showTitlePH == false" class="placeholder-text">Type title:"" and
+				press enter to set the title</span>
 			<span style="margin-top:4px;margin-left:4px;" *ngIf="showTitlePH == false && title != ''">{{title}}</span>
 		</div>
 		<div style="display: flex;margin-right: 10px;margin-bottom: 8px;">
-			<i-feather style="color:#A83D3E" name="clock" matTooltipPosition="below" matTooltip="Creation date/time"></i-feather>
+			<i-feather style="color:#A83D3E" name="clock" matTooltipPosition="below" matTooltip="Creation date/time">
+			</i-feather>
 			<span style="margin-top: 4px;margin-left: 4px;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</span>
 		</div>
 		<div style="display: flex;margin-right: 10px;">
 			<i-feather style="color:#A83D3E" name="tag" matTooltipPosition="below" matTooltip="Tags"></i-feather>
-			<span [class.placeholder-text-visible]="showTagsPH == true && tags.length == 0"  
+			<span [class.placeholder-text-visible]="showTagsPH == true && tags.length == 0"
 				  [class.placeholder-text-invisible]="showTagsPH == false && tags.length > 0" class="placeholder-text">
-				  Type tag: plus the tag name in quotes, and press enter to add a tag
-			</span>
+				Type tag: plus the tag name in quotes, and press enter to add a tag </span>
 			<span *ngIf="showTagsPH == false && tags.length > 0">
 				<mat-chip-list class="chip-list chip-list-list-item">
-					<mat-basic-chip class="status-chip-list-item" *ngFor="let t of tags">
-						{{t.tagValue}}
+					<mat-basic-chip class="status-chip-list-item" *ngFor="let t of tags"> {{t.tagValue}}
 					</mat-basic-chip>
 				</mat-chip-list>
 			</span>
 		</div>
 	</div>
-	<button matTooltipPosition="below" matTooltip="Save" mat-icon-button>
+	<mat-icon *ngIf="this.saveSuccess == true" style="color:#2E7D32">check_circle</mat-icon>
+	<button matTooltipPosition="below" matTooltip="Save" mat-icon-button (click)="save()">
 		<mat-icon>save</mat-icon>
 	</button>
 	<button tabindex="1" matTooltipPosition="below" matTooltip="Close without saving" mat-icon-button (click)="close()">
 		<mat-icon>close</mat-icon>
-	</button>	
+	</button>
 </div>
-<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="note-content">	
-	<div #editorBlock (input)="onInput()" (keydown)="keyDown($event)" contenteditable="true"></div>
+<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="note-content">
+	<div ngPreserveWhitespace #editorBlock (input)="onInput()" (keydown)="keyDown($event)" contenteditable="true"
+		 style="white-space: pre;"></div>
 </div>

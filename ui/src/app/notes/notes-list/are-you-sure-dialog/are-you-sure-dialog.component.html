@@ -1,0 +1,16 @@
+<h2 mat-dialog-title>Deleting {{name}}</h2>
+<div mat-dialog-content>
+    <p *ngIf="this.deleteType == 'page'">You're about to permanently delete the page <strong>{{name}}</strong>. Once you confirm and press Delete, it cannot be undone or recovered.</p>
+	<p *ngIf="this.deleteType == 'notebook'">You're about to permanently delete the notebook <strong>{{name}}</strong> and all of the pages it contains. Once you confirm and press Delete, it cannot be undone or recovered.</p>
+	<br/>
+	<p>Please enter the following text in the box below to confirm</p>
+	<code class="confirm-text">{{name}}</code>
+	<mat-form-field style="width: 252px;margin: 10px auto; display: block;" id="login-register-text-box">
+		<input [(ngModel)]="enteredName" matInput placeholder="Name" name="project" tabindex="0" required>
+	</mat-form-field>
+	<span style="display:block;color:#f44336;" *ngIf="!enteredNameProperly">{{errorMessage}}</span>
+</div>
+<div mat-dialog-actions style="float:right;margin-bottom: 0px;">
+	<button mat-button (click)="close()">Cancel</button>
+	<button mat-raised-button color="warn" (click)="save()" tabindex="1">Delete</button>
+</div>

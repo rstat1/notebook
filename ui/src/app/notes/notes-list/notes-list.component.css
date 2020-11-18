@@ -159,4 +159,23 @@ pre > code {
 .editor-element {
 	min-height: 202px;
 }
-
+.notebook-list {
+	height: 100vh;
+	max-width: 373px;
+	min-width: 373px;
+	background-color: #1d1d1d;
+}
+.notes-list-actions {
+	padding: 0;
+	height: 32px;
+	background-color: #1d1d1d;
+}
+.action-button {
+	margin-left: 14px;
+	padding: 0px 5px 0px 0px;
+}
+.action-button-icon {
+	vertical-align: text-bottom !important;
+	padding-top: 3px;
+	color: #A83D3E
+}

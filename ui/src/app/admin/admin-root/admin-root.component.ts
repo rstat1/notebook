@@ -1,7 +1,6 @@
 import { Router, ActivatedRoute } from '@angular/router';
 import { Component, OnInit } from '@angular/core';
 
-import { MenuService } from 'app/services/menu.service';
 import { APIService } from 'app/services/api/api.service';
 import { AuthService } from 'app/services/auth/auth.service';
 
@@ -29,25 +28,18 @@ export class AdminRootComponent implements OnInit {
 		"restore", "backup", "new-project", "edit-project", "tokens", "project-import"
 	];
 
-	constructor(private auth: AuthService, public menu: MenuService, public api: APIService,
+	constructor(private auth: AuthService, public api: APIService,
 		public router: Router, public route: ActivatedRoute) {
 
 		this.pathExtra = window.location.pathname;
 	}
 	ngOnInit() {
-		this.menu.SetMenuContext("admin", "");
-		this.categories = this.menu.GetCategoryList();
-		this.menu.MenuItemClicked.subscribe(action => {
-			if (this.knownActions.includes(action)) {
-				this.pathExtra = "/settings/"+action;
-				this.router.navigate([action], { relativeTo: this.route });
-			}
-		});
+
 	}
 	public DoesUserHaveRoot(): boolean {
 		return this.auth.UserIsRoot;
 	}
 	public doSomethingWithClick(clickedItemTitle: string) {
-		this.menu.HandleMouseEvent(clickedItemTitle);
+
 	}
 }

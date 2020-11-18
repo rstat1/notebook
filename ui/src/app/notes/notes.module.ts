@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import {
 	MatIconModule, MatGridListModule, MatButtonModule, MatTabsModule, MatInputModule, MatChipsModule,
 	MatToolbarModule, MatDialogModule, MatButtonToggleModule, MatTooltipModule
@@ -11,9 +10,8 @@ import {
 
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
 import { MarkdownModule, MarkedOptions, MarkedRenderer } from 'ngx-markdown';
-import { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare } from 'angular-feather/icons';
+import { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare, Trash2, BookOpen } from 'angular-feather/icons';
 
-import { MenuModule } from 'app/menu/menu.module';
 import { AuthGuard } from 'app/services/auth/auth.guard';
 import { NotesRootComponent } from 'app/notes/notes-root/notes-root.component';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
@@ -22,8 +20,10 @@ import { ListOverlayComponent } from 'app/notes/list-overlay/list-overlay.compon
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
 import { BlocksListComponent, BlocksListItem } from 'app/notes/blocks-list/blocks-list.component';
 import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
+import { AreYouSureDialogComponent } from './notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
+import { NewNotebookDialogComponent } from './notes-list/new-notebook-dialog/new-notebook-dialog.component';
 
-const icons = { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare };
+const icons = { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare, Trash2, BookOpen };
 
 const notesRoutes = [
 	{
@@ -76,14 +76,14 @@ export function markedOptionsFactory(): MarkedOptions {
 		BlocksListComponent,
 		ListOverlayComponent,
 		BlockListItemComponent,
+		AreYouSureDialogComponent,
+		NewNotebookDialogComponent,
 	],
 	imports: [
-		MenuModule,
 		FormsModule,
 		CommonModule,
 		MatTabsModule,
 		MatIconModule,
-		DragDropModule,
 		MatInputModule,
 		MatChipsModule,
 		MatDialogModule,
