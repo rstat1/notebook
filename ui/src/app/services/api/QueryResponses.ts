@@ -37,6 +37,16 @@ export class NewPageRequest {
 		this.notebookID = notebook;
 	}
 }
+export class NewPageResponse {
+	public page: Page;
+	public error: string;
+	public successful: boolean;
+	constructor(status: string, pageMD?: Page, error?: string) {
+		this.page = pageMD;
+		this.error = error;
+		this.successful = status == "success" ? true : false;
+	}
+}
 
 export class DeleteAPITokenRequest {
 	public id: string;

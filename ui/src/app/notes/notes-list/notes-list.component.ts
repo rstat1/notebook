@@ -7,7 +7,7 @@ import { Component, OnInit, AfterViewInit, ChangeDetectorRef, NgZone, ViewChild,
 import { APIService } from 'app/services/api/api.service';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
-import { PageTag, Page, NotebookReference } from 'app/services/api/QueryResponses';
+import { PageTag, Page, NotebookReference, NewPageResponse } from 'app/services/api/QueryResponses';
 import { AreYouSureDialogComponent } from 'app/notes/notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
 import { NewNotebookDialogComponent } from './new-notebook-dialog/new-notebook-dialog.component';
 
@@ -105,7 +105,21 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 	public newDocument() {
-		this.dialog.open(DocEditorComponent, { width: '1050px', disableClose: true, autoFocus: true, data: { activeNotebook: this.activeNotebookID } });
+		var newPage = this.dialog.open(DocEditorComponent, {
+			width: '1050px', disableClose: true, autoFocus: true,
+			data: { activeNotebook: this.activeNotebookID }
+		});
+
+		newPage.afterClosed().subscribe(result => {
+			newPage.close();
+			var res = <NewPageResponse>result;
+			if (res.successful) {
+				this.showMessage("Created new page: " + res.page.title);
+				this.cache.currentPageList.push(res.page);
+			} else {
+				this.showMessage("Failed: " + res.error)
+			}
+		})
 	}
 	//thanks andrewseguin for this stackblitz thing: https://stackblitz.com/edit/mat-chip-selected-with-set-bug-lmuuab
 	public clicked(id: number) {
@@ -141,9 +155,9 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 					if (resp.status == "success") {
 						this.showMessage("Successfully deleted: " + pageTitle);
 						this.cache.getPages(this.activeNotebookID, true).subscribe(resp => { this.notes = resp; });
-						if (pageID == this.activePageID) {
-							this.router.navigate(["../../"], { relativeTo: this.route });
-						}
+						this.activePageID = "";
+						this.pageContent = "";
+						this.router.navigate(["nb", this.activeNotebookID]);
 					}
 				}, error => { this.showMessage("Failed: " + error); })
 			}

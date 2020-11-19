@@ -9,8 +9,8 @@ import { DataCacheService } from 'app/services/data-cache.service';
 import { ICommandListEntry } from 'app/components/command-list/cmd-list-common';
 import { ListOverlayService } from 'app/notes/list-overlay/list-overlay.service';
 import { BlocksListComponent } from 'app/notes/blocks-list/blocks-list.component';
-import { NewPageMetadata, NewPageRequest, PageTag } from 'app/services/api/QueryResponses';
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
+import { NewPageMetadata, NewPageRequest, NewPageResponse, PageTag } from 'app/services/api/QueryResponses';
 
 import { MDBoldButton, MDItalicButton, MDStrikeButton } from 'app/notes/doc-editor/markdown-buttons'
 
@@ -222,10 +222,12 @@ export class DocEditorComponent implements AfterViewInit {
 		newPageForm.append("content", this.editor.nativeElement.innerText);
 
 		this.api.NewPage(newPageForm).subscribe(resp => {
-			if (resp.response == "success") {
+			if (resp.status == "success") {
 				this.saveSuccess = true;
-				this.dialogRef.close(true);
+				this.dialogRef.close(new NewPageResponse(resp.status, JSON.parse(resp.response)));
 			}
+		}, error => {
+			this.dialogRef.close(new NewPageResponse("failed", null, error.error.response));
 		})
 	}
 	public addBlock() {
