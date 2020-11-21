@@ -120,10 +120,17 @@ export class MDStrikeButton extends MDButtonBase {
 		return "<b><strike>S</strike</b>"
 	}
 	getModifiedContents(selectionContent: string): string {
-		return "";
+		if (selectionContent.startsWith("~~") == true && selectionContent.endsWith("~~") == true) {
+			selectionContent = selectionContent.replace(/\~/g, "");
+			return selectionContent;
+		} else {
+			selectionContent = selectionContent.padStart(selectionContent.length + 1, "~~");
+			selectionContent = selectionContent.padEnd(selectionContent.length + 1, "~~");
+			return selectionContent;
+		}
 	}
 	hasModifiedContents(selectionContent: string): boolean {
-		return false;
+		return selectionContent.startsWith("~~") == true && selectionContent.endsWith("~~") == true
 	}
 	handleButtonClick(): boolean { return false; }
 }
