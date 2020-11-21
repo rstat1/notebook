@@ -12,7 +12,7 @@ import { BlocksListComponent } from 'app/notes/blocks-list/blocks-list.component
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
 import { NewPageMetadata, NewPageRequest, NewPageResponse, PageTag } from 'app/services/api/QueryResponses';
 
-import { MDBoldButton, MDItalicButton, MDStrikeButton } from 'app/notes/doc-editor/markdown-buttons'
+import { MDBoldButton, MDCodeButton, MDItalicButton, MDStrikeButton } from 'app/notes/doc-editor/markdown-buttons'
 
 export type BlockComponent<T> = Type<T>;
 
@@ -49,7 +49,7 @@ export class DocEditorComponent implements AfterViewInit {
 		this.activeNotebookID = <string>this.data.activeNotebook;
 		this.mdEditor = new MediumEditor(this.editor.nativeElement, {
 			toolbar: {
-				buttons: ["md-bold", "md-italic", "md-strike"]
+				buttons: ["md-bold", "md-italic", "md-strike", "md-code"]
 			},
 			paste: {
 				forcePlainText: true,
@@ -61,18 +61,21 @@ export class DocEditorComponent implements AfterViewInit {
 				text: "Page content goes here"
 			},
 			extensions: {
+				'MDCode': new MDCodeButton(),
 				'MDBold': new MDBoldButton(),
 				'MDStrike': new MDStrikeButton(),
 				'MDItalic': new MDItalicButton(),
 			}
 		});
+
 	}
 	showListOfBlocks(blockID: string): void {
 		this.showListOverlay(this.editor.nativeElement);
 	}
 	keyDown(event: KeyboardEvent) {
 		if (event != undefined) {
-			var currentText: string = this.editor.nativeElement.innerText;
+			var staging: HTMLElement = document.getElementById("editor-stage");
+			var currentText: string = this.getText(this.editor.nativeElement);
 			if (currentText != "") { this.showContentPH = false; }
 			else { this.showContentPH = true; }
 			if (event.key == "Enter" && this.execCommand() && this.lastCmdComplete) {
@@ -80,9 +83,9 @@ export class DocEditorComponent implements AfterViewInit {
 					this.listOverlay.close();
 					this.overlayVisible = false;
 				}
+
 				this.editor.nativeElement.innerText = currentText.replace(this.lastCmd, "");
 				event.preventDefault();
-
 
 				if (this.lastCmd.startsWith("tag")) {
 					this.showTagsPH = false;
@@ -96,6 +99,7 @@ export class DocEditorComponent implements AfterViewInit {
 				this.lastCmdComplete = false;
 			}
 		}
+		return true;
 	}
 	addTag(tagValue: string) {
 		tagValue = tagValue.replace('"', "")
@@ -201,8 +205,22 @@ export class DocEditorComponent implements AfterViewInit {
 	trackByBlock(index: number, item: any) {
 		return item;
 	}
+	public removeHTML(event: ClipboardEvent) {
+		var editor = this.editor.nativeElement;//document.getElementById("editor");
+		var es = document.getElementById("editor-stage");
+		var pastedText = event.clipboardData.getData("text/html");
+		if (pastedText != "") {
+			event.preventDefault();
+			es.innerHTML = pastedText;
+			setTimeout(() => {
+				this.text = this.getText(es);
+				editor.innerText = this.text;
+				es.innerHTML = null;
+			}, 1);
+		}
+	}
 	public close() {
-		this.dialogRef.close();
+		this.dialogRef.close(new NewPageResponse("closed", null, "closed"));
 	}
 	public save() {
 		let newPage: NewPageRequest;
@@ -219,7 +237,7 @@ export class DocEditorComponent implements AfterViewInit {
 		newPage = new NewPageRequest(pageMD, this.activeNotebookID);
 
 		newPageForm.append("metadata", JSON.stringify(newPage))
-		newPageForm.append("content", this.editor.nativeElement.innerText);
+		newPageForm.append("content", this.getText(this.editor.nativeElement));
 
 		this.api.NewPage(newPageForm).subscribe(resp => {
 			if (resp.status == "success") {
@@ -258,5 +276,31 @@ export class DocEditorComponent implements AfterViewInit {
 		childComponent.instance.ItemText = itemTitle;
 		childComponent.instance.ItemDescription = itemDescription;
 		return childComponent;
+	}
+	private getStyle(n: any, p: any): any {
+		return n.currentStyle ?
+			n.currentStyle[p] :
+			document.defaultView.getComputedStyle(n, null).getPropertyValue(p);
+	}
+	private getText(node: any): string {
+		var result = '';
+		if (node == null) {
+			node = document.getElementById("editor-stage");
+		}
+		if (node.nodeType == document.TEXT_NODE) {
+			// Replace repeated spaces, newlines, and tabs with a single space.
+			result = node.nodeValue; //.replace( /\s+/g, '' );
+		} else {
+			for (var i = 0; i < node.childNodes.length; i++) {
+				result += this.getText(node.childNodes[i]);
+			}
+
+			var d = this.getStyle(node, 'display');
+			if (d.match(/^block/) || d.match(/list/) || d.match(/row/) || node.tagName == 'BR' || node.tagName == 'HR') {
+				result += '\n';
+			}
+		}
+
+		return result;
 	}
 }

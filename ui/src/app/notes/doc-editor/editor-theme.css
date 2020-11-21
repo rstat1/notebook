@@ -28,7 +28,8 @@
 }
 .medium-editor-toolbar li .medium-editor-button-active {
     background-color: #505050;
-    color: #fff; }
+    color: #fff; 
+}
 .medium-editor-toolbar li .medium-editor-button-last {
     border-right: none; 
 }

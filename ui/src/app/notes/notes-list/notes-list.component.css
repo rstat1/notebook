@@ -13,7 +13,7 @@ pre > code {
 }
 .list {
     margin-bottom: 31px;
-    max-height: 81.1vh;
+    max-height: 92vh;
     overflow: hidden;
 }
 .list-element {
@@ -171,6 +171,7 @@ pre > code {
 	background-color: #1d1d1d;
 }
 .action-button {
+	color: #98959A;
 	margin-left: 14px;
 	padding: 0px 5px 0px 0px;
 }

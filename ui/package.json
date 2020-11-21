@@ -45,7 +45,6 @@
     "@angular/cli": "^10.2.0",
     "@angular/compiler-cli": "^10.2.2",
     "@angular/language-service": "^10.2.2",
-    "@types/medium-editor": "^5.0.3",
     "@types/node": "^12.11.1",
     "codelyzer": "^5.1.2",
     "ts-node": "~3.2.0",

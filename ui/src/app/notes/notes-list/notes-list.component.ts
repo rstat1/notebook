@@ -116,7 +116,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			if (res.successful) {
 				this.showMessage("Created new page: " + res.page.title);
 				this.cache.currentPageList.push(res.page);
-			} else {
+			} else if (res.error != "closed") {
 				this.showMessage("Failed: " + res.error)
 			}
 		})

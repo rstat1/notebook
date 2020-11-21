@@ -1,3 +1,4 @@
+import { highlight } from 'highlight.js';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -55,7 +56,6 @@ export function markedOptionsFactory(): MarkedOptions {
 				return "<h" + level + ">" + text + "</h" + level + ">";
 		}
 	}
-
 	return {
 		renderer: renderer,
 		gfm: true,
@@ -63,6 +63,10 @@ export function markedOptionsFactory(): MarkedOptions {
 		pedantic: false,
 		smartLists: false,
 		smartypants: false,
+		highlight: (code, lang): string => {
+			if (lang != "") { return highlight(lang, code, false).value; }
+			else { return code; }
+		},
 	};
 }
 

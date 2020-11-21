@@ -32,7 +32,9 @@
 		<mat-icon>close</mat-icon>
 	</button>
 </div>
+<!-- min-width: 500px; height:100px;display:block; -->
 <div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="note-content">
-	<div ngPreserveWhitespace #editorBlock (input)="onInput()" (keydown)="keyDown($event)" contenteditable="true"
-		 style="white-space: pre;"></div>
+	<div style="white-space:pre-wrap;" ngPreserveWhitespace #editorBlock (input)="onInput()"
+		 (paste)="removeHTML($event)" (keydown)="keyDown($event)" contenteditable="true"></div>
+	<div style="display: none;" id="editor-stage"></div>
 </div>
