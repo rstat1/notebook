@@ -12,24 +12,26 @@ import (
 )
 
 const (
-	tokenRenewTime       = 1440
-	tokenRenewTimeStr    = "60s"
-	vaultKVPath          = "/secret/notebook/"
+	tokenRenewTime    = 1440
+	tokenRenewTimeStr = "60s"
+
 	vaultKVPrefix        = "notes"
 	vaultDecryptEndpoint = "/transit/decrypt/"
 	vaultEncryptEndpoint = "/transit/encrypt/"
 	vaultDataKeyEndpoint = "/transit/datakey/plaintext/"
-	vaultDBCredsEndpoint = "/database/creds/notebook-service"
 )
 
 //VaultKMS ...
 type VaultKMS struct {
-	stopRefresh      bool
-	dev              bool
-	client           *vault.Client
-	renewer          *vault.Renewer
-	currentAuthToken string
-	currentBaseToken string
+	stopRefresh          bool
+	dev                  bool
+	client               *vault.Client
+	renewer              *vault.Renewer
+	currentAuthToken     string
+	currentBaseToken     string
+	serviceName          string
+	vaultKVPath          string
+	vaultDBCredsEndpoint string
 }
 
 //Context extra info describing usage of a particular key. Useful in generating derived keys.
@@ -53,6 +55,7 @@ func NewVaultKMS(dev bool) *VaultKMS {
 		}
 	}
 	kms := VaultKMS{client: c, dev: dev}
+	kms.setClientParameters()
 	kms.setAccessToken()
 	return &kms
 }
@@ -83,11 +86,7 @@ func (kms *VaultKMS) GenerateKey(keyID string, ctx Context) (key [32]byte, seale
 //GetDBCredentials Gets a username-password pair for the DB from Vault
 func (kms *VaultKMS) GetDBCredentials() (string, string, error) {
 	common.LogDebug("", "", "GetDBCredentials")
-	credsEndpoint := vaultDBCredsEndpoint
-	if kms.dev == false {
-		credsEndpoint += "-prod"
-	}
-	if creds, err := kms.client.Logical().Read(credsEndpoint); err == nil {
+	if creds, err := kms.client.Logical().Read(kms.vaultDBCredsEndpoint); err == nil {
 		credRenewer, err := kms.client.NewRenewer(&vault.RenewerInput{Secret: creds})
 		if err != nil {
 			return "", "", err
@@ -127,13 +126,9 @@ func (kms *VaultKMS) Decrypt(cipherBlob string) ([]byte, error) {
 
 //WriteKeyToKVStorage Writes decryption key to the specified route in Vault
 func (kms *VaultKMS) WriteKeyToKVStorage(key, path string) error {
-	kvPrefix := vaultKVPrefix
 	payload := map[string]interface{}{}
 	payload["key"] = key
-	if common.DevMode {
-		kvPrefix += "-dev"
-	}
-	if _, e := kms.client.Logical().Write(vaultKVPath+"/"+kvPrefix+"/"+path, payload); e != nil {
+	if _, e := kms.client.Logical().Write(kms.vaultKVPath+"/"+vaultKVPrefix+"/"+path, payload); e != nil {
 		return e
 	}
 	return nil
@@ -141,11 +136,7 @@ func (kms *VaultKMS) WriteKeyToKVStorage(key, path string) error {
 
 //ReadKeyFromKV Read a decryption key stored at the specified path from Vault
 func (kms *VaultKMS) ReadKeyFromKV(path string) (string, error) {
-	kvPrefix := vaultKVPrefix
-	if common.DevMode {
-		kvPrefix += "-dev"
-	}
-	if value, e := kms.client.Logical().Read(vaultKVPath + "/" + kvPrefix + "/" + path); e != nil {
+	if value, e := kms.client.Logical().Read(kms.vaultKVPath + "/" + vaultKVPrefix + "/" + path); e != nil {
 		return "", e
 	} else {
 		if value != nil {
@@ -158,11 +149,7 @@ func (kms *VaultKMS) ReadKeyFromKV(path string) (string, error) {
 
 //DeleteKeyFromKV Deletes a decryption key stored at the specified path
 func (kms *VaultKMS) DeleteKeyFromKV(path string) error {
-	kvPrefix := vaultKVPrefix
-	if common.DevMode {
-		kvPrefix += "-dev"
-	}
-	if _, e := kms.client.Logical().Delete(vaultKVPath + "/" + kvPrefix + "/" + path); e != nil {
+	if _, e := kms.client.Logical().Delete(kms.vaultKVPath + "/" + vaultKVPrefix + "/" + path); e != nil {
 		return common.LogError("", e)
 	}
 	return nil
@@ -198,7 +185,6 @@ func (kms *VaultKMS) UnsealKey(keyID string, sealedKey []byte, ctx Context) (key
 func (kms *VaultKMS) RenewToken() *vault.Secret {
 	if s, e := kms.client.Auth().Token().RenewTokenAsSelf(kms.client.Token(), 120); e == nil {
 		kms.client.SetToken(s.Auth.ClientToken)
-		// common.LogError("saving renewed token failed.", kms.updateVaultToken(s, "dc-service"))
 		return s
 	}
 	return nil
@@ -238,17 +224,6 @@ func (kms *VaultKMS) tokenRenewalTimer() {
 func (kms *VaultKMS) setAccessToken() {
 	if loginErr := kms.login(); loginErr != nil {
 		common.LogWarn("loginType", "AppRole", loginErr)
-		// if common.CurrentConfig.VaultBaseAuthToken != "" {
-		// 	kms.client.SetToken(common.CurrentConfig.VaultBaseAuthToken)
-		// 	common.UnsetVaultToken()
-		// } else {
-		// 	if t, e := kms.getVaultToken("dc-service"); e == nil {
-		// 		kms.client.SetToken(t.Auth.ClientToken)
-		// 		kms.RenewToken()
-		// 	} else {
-		// 		common.LogError("", e)
-		// 	}
-		// }
 	} else {
 		kms.tokenRenewalTimer()
 	}
@@ -280,7 +255,7 @@ func (kms *VaultKMS) getTokenLeaseTime() time.Duration {
 //is a very short lived token that only has access to AppRole Secret ID for this service.
 func (kms *VaultKMS) login() error {
 	kms.client.SetToken(os.Getenv("ARSID_ACCESS_KEY"))
-	if arsid, e := kms.client.Logical().Write("auth/approle/role/notebook/secret-id", nil); e == nil {
+	if arsid, e := kms.client.Logical().Write("auth/approle/role/"+kms.serviceName+"/secret-id", nil); e == nil {
 		t, e := kms.client.Logical().Write("auth/approle/login", map[string]interface{}{"role_id": os.Getenv("APPROLE_ID"), "secret_id": arsid.Data["secret_id"].(string)})
 		if e != nil {
 			return e
@@ -289,5 +264,17 @@ func (kms *VaultKMS) login() error {
 		return nil
 	} else {
 		return e
+	}
+}
+
+func (kms *VaultKMS) setClientParameters() {
+	if kms.dev {
+		kms.serviceName = "notebookdev"
+		kms.vaultKVPath = "/secret/notebookdev/"
+		kms.vaultDBCredsEndpoint = "/database/creds/notebookdev-service"
+	} else {
+		kms.serviceName = "notebook"
+		kms.vaultKVPath = "/secret/notebook/"
+		kms.vaultDBCredsEndpoint = "/database/creds/notebook-service"
 	}
 }

@@ -6,5 +6,5 @@
 export const environment = {
 	devServer: true,
 	production: false,
-	FrostServiceID: "UaR7zGlJPqrAvbkQMtUEt9I64wapRvMy",
+	FrostServiceID: "7t49XEE7mJNxgSezhB70eG9kT1WymHsH",
 };

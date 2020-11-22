@@ -1,0 +1,24 @@
+{
+    "processes": [
+        {
+            "path": "/home/rstat1/Apps/third_party/redis-3.2.6/src",
+            "processName": "redis-server",
+            "arguments": []
+        },
+        {
+            "path": "/home/rstat1/Apps/go/src/go.alargerobot.dev/frost/out",
+            "processName": "frost",
+            "arguments": [
+                "-devmode=true"
+            ]
+        },
+        {
+            "path": "/usr/local/bin/",
+            "processName": "ng",
+            "workDir": "/home/rstat1/Apps/go/src/go.alargerobot.dev/notebook/ui",
+            "arguments": [
+                "serve"
+            ]
+        }
+    ]
+}

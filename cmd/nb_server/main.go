@@ -26,11 +26,13 @@ func main() {
 		common.LogError("", errors.New("not running under watchdog"))
 	}
 
+	common.LogDebug("", "", common.BaseURL)
+
 	router := vestigo.NewRouter()
 	router.SetGlobalCors(&vestigo.CorsAccessControl{
 		AllowMethods: []string{"GET", "POST", "DELETE", "OPTIONS", "PUT"},
 		AllowHeaders: []string{"Authorization", "Cache-Control", "X-Requested-With", "Content-Type"},
-		AllowOrigin:  []string{"https://notebook" + common.BaseURL, "http://notebook" + common.BaseURL, "http://192.168.1.12:4200", "http://localhost:4200"},
+		AllowOrigin:  []string{"https://notebook" + common.BaseURL, "http://notebookdev" + common.BaseURL, "http://192.168.1.12:4200", "http://localhost:4200"},
 	})
 
 	kms := crypto.NewVaultKMS(*dev)
