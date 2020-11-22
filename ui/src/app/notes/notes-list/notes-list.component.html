@@ -6,23 +6,19 @@
 					<button class="action-button" mat-button (click)="addNotebook()">
 						<mat-icon class="action-button-icon">add</mat-icon> Add Notebook
 					</button>
-					<button *ngIf="this.activeNotebookID != ''" class="action-button" mat-button
-							(click)="deleteNotebook()">
+					<button *ngIf="this.activeNotebookID != ''" class="action-button" mat-button (click)="deleteNotebook()">
 						<mat-icon class="action-button-icon">delete</mat-icon> Delete Notebook
 					</button>
 					<span style="flex: 1 1 auto"></span>
-					<button style="margin-right: 14px;" class="action-button" matTooltipPosition="below"
-							matTooltip="Settings" mat-icon-button>
+					<button style="margin-right: 14px;" class="action-button" matTooltipPosition="below" matTooltip="Settings" mat-icon-button>
 						<mat-icon style="margin-left: 4px;" class="action-button-icon">admin_panel_settings</mat-icon>
 					</button>
 				</mat-toolbar>
 			</div>
-			<span style="display:block;height:92vh;padding-top:20px;" malihu-scrollbar
-				  [scrollbarOptions]="scrollbarOptions">
+			<span style="display:block;height:92vh;padding-top:20px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
 				<div *ngIf="this.notebooks.length != 0" style="height:100%;">
-					<notebook-list-item [isActive]="this.isActiveNB(notebook.id)"
-										(click)="this.notebookClicked(notebook)" [title]="notebook.name"
-										*ngFor="let notebook of this.notebooks"></notebook-list-item>
+					<notebook-list-item [isActive]="this.isActiveNB(notebook.id)" (click)="this.notebookClicked(notebook)"
+										[title]="notebook.name" *ngFor="let notebook of this.notebooks"></notebook-list-item>
 				</div>
 				<div *ngIf="this.notebooks.length == 0" style="height:100%;">
 					<p style="text-align: center;font-style:italic;">Its quiet in here. Too quiet.</p>
@@ -31,69 +27,65 @@
 		</div>
 		<div *ngIf="this.activeNotebookID != ''">
 			<div style="background-color: #2e2e2e;height: 100vh;">
-				<div style="display: flex;max-width: 373px;">
-					<div class="project-list-button" style="width: 146px;" (click)='showMenu("filter", $event)'
+				<div style="display: flex;width: 373px;">
+					<div #search tabindex="1" id="filterListButton" class="project-list-button" (click)='showMenu("filter", $event)'
 						 [class.project-list-button-selected]="showSearch == true">
 						<mat-icon style="color:#A83D3E;">filter_list</mat-icon>
-						<span class="project-name">Filter by Tag</span>
+						<span *ngIf="this.filterSize == 0" class="project-name">Filter by Tag</span>
+						<span *ngIf="this.filterSize == 1" class="project-name">1 Tag Selected</span>
+						<span *ngIf="this.filterSize > 1" class="project-name">{{this.filterSize}} Tags Selected</span>
 						<mat-icon>expand_more</mat-icon>
+						<div class="dropdown-box" [class.dropdown-shown]="showSearch == true" [class.dropdown-hidden]="showSearch == false"
+							 malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="margin-left: 372px;">
+							<mat-chip-list multiple style="margin-left: 10px;" class="chip-list chip-list-list-item">
+								<mat-chip style="border-radius: 0;" [selectable]="true" [selected]="selectedTags.value.has(tag.tagId)"
+										  (click)="tagClicked(tag.tagId)" *ngFor="let tag of docTags" [value]="tag.tagId"> {{tag.tagValue}}
+								</mat-chip>
+							</mat-chip-list>
+						</div>
 					</div>
 					<button mat-button (click)="newDocument()">
 						<mat-icon style="color:#A83D3E">add</mat-icon> New Page
 					</button>
 				</div>
-				<div #search class="dropdown-box" [class.dropdown-shown]="showSearch == true"
-					 [class.dropdown-hidden]="showSearch == false">
-					<div id="scrollbox" style="height:250px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
-						<div style="margin-top:15px;margin-left:20px;margin-bottom: 10px;">Tags</div>
-						<mat-chip-list multiple style="margin-left: 10px;" class="chip-list chip-list-list-item">
-							<mat-chip [selectable]="true" [selected]="selectedTags.value.has(tag.tagId)"
-									  (click)="clicked(tag.tagId)" *ngFor="let tag of docTags" [value]="tag.tagId">
-								{{tag.tagValue}} </mat-chip>
-						</mat-chip-list>
-					</div>
-				</div>
-				<div *ngIf="this.notes.length > 0" malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="list"
+				<div *ngIf="this.notes != null && this.notes.length > 0" malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="list"
 					 style="width: 373px;">
-					<div (click)="this.noteClicked(note.id)" class="list-element"
-						 [class.selected-note]="this.isActiveNote(note.id)" *ngFor="let note of notes">
+					<div (click)="this.noteClicked(note.id)" class="list-element" [class.selected-note]="this.isActiveNote(note.id)"
+						 *ngFor="let note of notes">
 						<div style="flex: 2;">
-							<!-- <i-feather class="md-icon" style="margin-right: 5px;margin-left:2px;" name="file"
-										   matTooltipPosition="below" matTooltip="Title"></i-feather>  -->
 							<span style="display: flex;">{{note.title}} </span>
 							<mat-chip-list class="chip-list chip-list-list-item">
 								<i-feather class="md-icon" name="tag" matTooltipPosition="below" matTooltip="Tags">
 								</i-feather>
-								<mat-basic-chip style="display: flex;" class="status-chip-list-item"
-												*ngFor="let t of note.tags">
+								<mat-basic-chip style="display: flex;" class="status-chip-list-item" *ngFor="let t of note.tags">
 									<span style="margin-top:1px;">{{getTagValue(t)}}</span>
 								</mat-basic-chip>
 							</mat-chip-list>
 							<mat-chip-list class="chip-list chip-list-list-item">
-								<i-feather class="md-icon" name="clock" matTooltipPosition="below"
-										   matTooltip="Last Edited on"></i-feather>
+								<i-feather class="md-icon" name="clock" matTooltipPosition="below" matTooltip="Last Edited on"></i-feather>
 								<mat-basic-chip style="display: flex;" class="status-chip-list-item">
-									<span
-										  style="margin-top: 1px;">{{note.lastEdited | date:'MMMM dd, yyyy hh:mm a'}}</span>
+									<span style="margin-top: 1px;">{{note.lastEdited | date:'MMMM dd, yyyy hh:mm a'}}</span>
 								</mat-basic-chip>
 							</mat-chip-list>
 						</div>
-						<div>
+						<div class="page-action-list">
 							<button matTooltipPosition="below" matTooltip="Delete page" mat-icon-button
 									(click)="deletePage(note.id, note.title)">
 								<i-feather style="color:#A83D3E;margin-bottom: 4px;" name="trash2"></i-feather>
+							</button>
+							<button style="margin-right: 14px;" class="action-button" matTooltipPosition="below" matTooltip="Share Page"
+									mat-icon-button>
+								<mat-icon style="margin-left: 4px;" class="action-button-icon">share</mat-icon>
 							</button>
 						</div>
 					</div>
 				</div>
 				<div class="list" style="width: 373px;" *ngIf="this.notes.length == 0">
-					<p style="padding: 15px;text-align: center;font-style:italic;">This notebook is ready and eager for
-						you to write exciting new things in it.</p>
+					<p style="padding: 15px;text-align: center;font-style:italic;">{{this.listEmptyMessage}}</p>
 				</div>
 			</div>
 		</div>
-		<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="background-color:#252525;flex: 1;"
-			 *ngIf="this.pageContent != ''">
+		<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="background-color:#252525;flex: 1;" *ngIf="this.pageContent != ''">
 			<div style="margin: 20px;">
 				<markdown class="editor-element task-description" [data]="this.pageContent"></markdown>
 			</div>

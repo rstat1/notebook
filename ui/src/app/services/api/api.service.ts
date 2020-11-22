@@ -50,6 +50,9 @@ export class APIService {
 	public GetPages(notebookID: string): Observable<APIResponse> {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID));
 	}
+	public FilterNotesByTags(tags: string[], notebookID: string): Observable<APIResponse> {
+		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/withtags"), JSON.stringify(tags))
+	}
 	public NewAPIToken(token: APIToken): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("apikey/new"), JSON.stringify(token));
 	}

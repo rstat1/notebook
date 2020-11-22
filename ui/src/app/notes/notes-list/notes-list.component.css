@@ -39,7 +39,7 @@ pre > code {
 	/* margin-left: 10px; */
 }
 .project-list-button {
-	width: 135px;
+	width: max-content;
     height: 40px;
     background-color: #2e2e2e;
 	padding: 11px;
@@ -55,13 +55,15 @@ pre > code {
 }
 .dropdown-box {
 	background-color: #1d1d1d;
-	min-height: 265px;
-    min-width: 495px;
-	max-width: 495px;
+	height: 250px;
+    width: 375px;
     position: absolute;
 	z-index: 1;
 	overflow: hidden;
-	margin-left: 0px;
+	left: 0px;
+	top: 40px;
+	padding-top: 10px;
+	padding-bottom: 10px;
 	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .dropdown-hidden {
@@ -179,4 +181,10 @@ pre > code {
 	vertical-align: text-bottom !important;
 	padding-top: 3px;
 	color: #A83D3E
+}
+.page-action-list {
+	display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 10px;
 }

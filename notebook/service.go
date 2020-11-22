@@ -60,6 +60,7 @@ func (notesAPI *ServiceAPI) NewPage(page data.NewPageRequest) error {
 		notesAPI.cleanupAfterError(page.Metadata.ID, page.NotebookID)
 		return err
 	}
+
 	return nil
 }
 

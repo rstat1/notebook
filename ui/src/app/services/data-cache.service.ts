@@ -11,6 +11,8 @@ export class DataCacheService {
 	public currentPageList: Page[] = Array<Page>();
 
 	private currentNBID: string = "";
+	private currentFilter: string[] = Array();
+	private filteredPageList: Page[] = Array();
 	private currentNotebook: NotebookReference;
 	private curPageLstSubject: ReplaySubject<Page[]>;
 	private tagsListSubject: ReplaySubject<PageTag[]>;
@@ -77,6 +79,18 @@ export class DataCacheService {
 	}
 	public getTagMap(): Map<string, string> {
 		return this.tagMap;
+	}
+	public getCurrentFilter(): string[] {
+		return this.currentFilter;
+	}
+	public getFilteredPageList(): Page[] {
+		return this.filteredPageList;
+	}
+	public cacheFilterSet(filterSet: string[]) {
+		this.currentFilter = filterSet;
+	}
+	public cacheFilteredPageList(filteredPages: Page[]) {
+		this.filteredPageList = filteredPages;
 	}
 	public getCurrentNotebook(): NotebookReference { return this.currentNotebook; }
 	public setCurrentNotebook(notebook: NotebookReference) {

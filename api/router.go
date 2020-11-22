@@ -57,7 +57,7 @@ func (api *Routes) InitAPIRoutes() {
 	api.router.Handle("/api/ash/notebook/:nbid/page/:id", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.pagemetadata))
 	api.router.Handle("/api/ash/notebook/:nbid/ripout/:id", common.RequestWrapper(api.user.AnyTokenProvided, "DELETE", api.ripout))
 	api.router.Handle("/api/ash/notebook/:nbid/pagecontent/:id", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.page))
-	api.router.Handle("/api/ash/notebook/:nbid/withtags", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.setfilter))
+	api.router.Handle("/api/ash/notebook/:nbid/withtags", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.setfilter))
 
 	api.router.Handle("/api/ash/tags", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.gettags))
 	api.router.Handle("/api/ash/tags/new", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newtag))
@@ -283,7 +283,7 @@ func (api *Routes) setfilter(resp http.ResponseWriter, r *http.Request) {
 			common.WriteFailureResponse(err, resp, "newpage", 500)
 			return
 		}
-		pages, err := api.data.GetPagesWithTags(tagList)
+		pages, err := api.data.GetPagesWithTags(tagList, vestigo.Param(r, "nbid"))
 		common.WriteResponse(resp, 500, pages, err)
 	} else {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetadata", 401)

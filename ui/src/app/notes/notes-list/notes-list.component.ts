@@ -19,16 +19,17 @@ import { NewNotebookDialogComponent } from './new-notebook-dialog/new-notebook-d
 export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild('search') filterDropdown: ElementRef<HTMLElement>;
 
+	public filterSize: number = 0;
 	public filterText: string = "";
-	public activePageID: string = "";
+	public pageContent: string = "";
 	public activeNotebookID: string;
 	public activeNotebokName: string;
-	public haveFilter: boolean = false;
+	public activePageID: string = "";
 	public showSearch: boolean = false;
 	public notes: Page[] = new Array<Page>();
-	public showProjectListMenu: boolean = false;
 	public docTags: PageTag[] = Array<PageTag>();
 	public docTagsMap: Map<string, string> = new Map();
+	public selectedTags: FormControl = new FormControl(new Set());
 	public notebooks: NotebookReference[] = new Array<NotebookReference>();
 	public filteredProjects: NotebookReference[] = new Array<NotebookReference>();
 	public scrollbarOptions = {
@@ -38,8 +39,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		alwaysShowScrollbar: 0,
 		autoHideScrollbar: true,
 	};
-	public selectedTags: FormControl = new FormControl(new Set());
-	public pageContent: string = "";
+	public listEmptyMessage: string = "This notebook is ready and eager for you to write exciting new things in it.";
 
 	constructor(private router: Router, private route: ActivatedRoute, private api: APIService, private focusMon: FocusMonitor,
 		private cdr: ChangeDetectorRef, private zone: NgZone, private dialog: MatDialog, private cache: DataCacheService,
@@ -49,9 +49,14 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		this.route.params.subscribe((params) => {
 			if (params.nbid != "all" && params.nbid != undefined) {
 				this.activeNotebookID = params.nbid;
-				this.cache.getPages(params.nbid, false).subscribe(resp => {
-					this.notes = resp;
-				});
+				this.filterSize = this.cache.getCurrentFilter().length;
+				if (this.filterSize == 0) {
+					this.cache.getPages(params.nbid, false).subscribe(resp => {
+						this.notes = resp;
+					});
+				} else {
+					this.notes = this.cache.getFilteredPageList();
+				}
 			} else {
 				this.notes = Array();
 				this.activeNotebookID = "";
@@ -75,10 +80,12 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	}
 	ngAfterViewInit() {
 		if (this.filterDropdown) {
-			this.focusMon.monitor(this.filterDropdown, true).subscribe(o => this.zone.run(() => {
+			this.focusMon.monitor(this.filterDropdown, true).subscribe(o => {
 				this.cdr.markForCheck();
 				if (o == null) { this.showSearch = false; }
-			}));
+			});
+		} else {
+			console.log("no focus")
 		}
 	}
 	ngOnDestroy(): void {
@@ -87,13 +94,13 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 	public showMenu(which: string, event: MouseEvent) {
-		if (which == "filter") {
-			this.showSearch = !this.showSearch;
-			this.showProjectListMenu = false;
-		}
+		this.showSearch = !this.showSearch;
 	}
 	public notebookClicked(notebook: NotebookReference) {
 		this.activePageID = "";
+		this.cache.cacheFilterSet(new Array());
+		this.cache.cacheFilteredPageList(new Array());
+		this.selectedTags = new FormControl(new Set());
 		this.cache.setCurrentNotebook(notebook);
 		this.router.navigate(["nb", notebook.id]);
 	}
@@ -122,11 +129,39 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		})
 	}
 	//thanks andrewseguin for this stackblitz thing: https://stackblitz.com/edit/mat-chip-selected-with-set-bug-lmuuab
-	public clicked(id: number) {
+	public tagClicked(id: number) {
+		var tags: string[] = new Array();
 		const addChip = () => { this.selectedTags.value.add(id); };
 		const removeChip = () => { this.selectedTags.value.delete(id); };
 		this.selectedTags.value.has(id) ? removeChip() : addChip();
-		var tagsSelected: Array<number> = Array.from(this.selectedTags.value);
+		this.filterSize = (<Set<string>>this.selectedTags.value).size;
+
+		(<Set<string>>this.selectedTags.value).forEach((value) => {
+			tags.push(value);
+		});
+
+		if (this.filterSize > 0) {
+			this.api.FilterNotesByTags(tags, this.activeNotebookID).subscribe(resp => {
+				if (resp.status == "success") {
+					var result: Page[] = JSON.parse(resp.response);
+					this.cache.cacheFilterSet(tags);
+					this.cache.cacheFilteredPageList(this.notes);
+					if (result == null) {
+						this.notes = new Array();
+						this.listEmptyMessage = "You've filtered out all the notes.";
+					} else {
+						this.notes = result;
+						this.listEmptyMessage = "This notebook is ready and eager for you to write exciting new things in it.";
+					}
+				}
+			});
+		} else {
+			this.cache.getPages(this.activeNotebookID, false).subscribe(resp => {
+				this.notes = resp;
+				this.cache.cacheFilteredPageList(new Array());
+				this.cache.cacheFilterSet(new Array());
+			})
+		}
 	}
 	public addNotebook() {
 		var notebookName = this.dialog.open(NewNotebookDialogComponent, { width: '500px', disableClose: true, autoFocus: true, data: {} });
@@ -202,16 +237,6 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	public getTagValue(value: string): string {
 		return this.docTagsMap.get(value);
 	}
-	public filterProjects() {
-		if (this.filterText != "") {
-			this.haveFilter = true;
-			this.filteredProjects = this.notebooks.filter(notebook => notebook.name.indexOf(this.filterText, 0) > -1, this);
-		} else {
-			this.haveFilter = false;
-			this.filteredProjects = this.notebooks;
-		}
-	}
-
 	public getInitials(projectName: string) {
 		return projectName.substring(0, 2);
 	}
@@ -231,7 +256,6 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 
 		if (relatedTarget == undefined || (relatedTarget.parentElement != scrollbox && relatedTarget.parentElement != container)) {
 			console.log(container);
-			this.showProjectListMenu = false;
 			container.style.display = "none";
 		}
 	}
