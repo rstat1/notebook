@@ -7,7 +7,8 @@ import { FeatherModule } from 'angular-feather';
 import {
 	MatIconModule, MatGridListModule, MatButtonModule, MatTabsModule, MatInputModule, MatChipsModule, MatTableModule,
 	MatToolbarModule, MatDialogModule, MatButtonToggleModule, MatTooltipModule, MatMenuModule, MatCheckboxModule,
-	MatPaginatorModule
+	MatPaginatorModule,
+	MatSnackBarModule
 } from '@angular/material';
 
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
@@ -101,6 +102,7 @@ export function markedOptionsFactory(): MarkedOptions {
 		MatButtonModule,
 		MatToolbarModule,
 		MatTooltipModule,
+		MatSnackBarModule,
 		MatCheckboxModule,
 		MatGridListModule,
 		MatPaginatorModule,

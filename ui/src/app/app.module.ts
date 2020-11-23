@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FeatherModule } from 'angular-feather';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { RouterModule, Routes } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,7 +10,7 @@ import { MatButtonModule, MatInputModule, MatIconModule, MatTooltipModule } from
 import { List, Trash2, FilePlus, Sliders } from 'angular-feather/icons';
 
 import { NotesModule } from 'app/notes/notes.module';
-import { AdminModule } from 'app/admin/admin.module';
+import { AppRoutingModule } from 'app/app-routes.module';
 
 import { AppComponent } from 'app/root';
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
@@ -20,7 +19,6 @@ import { AuthGuard, RootGuard } from 'app/services/auth/auth.guard';
 import { AuthTokenInjector } from 'app/services/api/AuthTokenInjector';
 import { CommandListComponent, CommandListItem } from 'app/components/command-list/command-list.component';
 
-import { AppRoutingModule } from 'app/app-routes.module';
 import { APIService } from 'app/services/api/api.service';
 import { AuthService } from 'app/services/auth/auth.service';
 import { CommandListService } from 'app/components/command-list/command-list.service';
@@ -38,7 +36,6 @@ const icons = { FilePlus, Trash2, List, Sliders };
 	imports: [
 		FormsModule,
 		NotesModule,
-		AdminModule,
 		OverlayModule,
 		BrowserModule,
 		MatIconModule,
