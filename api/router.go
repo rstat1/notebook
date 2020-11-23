@@ -301,7 +301,8 @@ func (api *Routes) newtag(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "tags") {
 		body, _ := ioutil.ReadAll(r.Body)
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
-			common.WriteResponse(resp, 400, nil, api.data.NewTag(data.PageTag{TagID: uuid.New().String(), TagValue: string(body), Creator: username}))
+			newTag, err := api.data.NewTag(data.PageTag{TagID: uuid.New().String(), TagValue: string(body), Creator: username})
+			common.WriteResponse(resp, 400, newTag, err)
 		} else {
 			common.WriteFailureResponse(err, resp, "newpage", 400)
 		}

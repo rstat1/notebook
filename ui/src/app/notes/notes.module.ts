@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
 import {
 	MatIconModule, MatGridListModule, MatButtonModule, MatTabsModule, MatInputModule, MatChipsModule,
-	MatToolbarModule, MatDialogModule, MatButtonToggleModule, MatTooltipModule
+	MatToolbarModule, MatDialogModule, MatButtonToggleModule, MatTooltipModule, MatMenuModule
 } from '@angular/material';
 
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
@@ -22,7 +22,7 @@ import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-ite
 import { BlocksListComponent, BlocksListItem } from 'app/notes/blocks-list/blocks-list.component';
 import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
 import { AreYouSureDialogComponent } from './notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
-import { NewNotebookDialogComponent } from './notes-list/new-notebook-dialog/new-notebook-dialog.component';
+import { NamePromptDialogComponent } from './notes-list/new-notebook-dialog/new-notebook-dialog.component';
 
 const icons = { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare, Trash2, BookOpen };
 
@@ -81,13 +81,14 @@ export function markedOptionsFactory(): MarkedOptions {
 		ListOverlayComponent,
 		BlockListItemComponent,
 		AreYouSureDialogComponent,
-		NewNotebookDialogComponent,
+		NamePromptDialogComponent,
 	],
 	imports: [
 		FormsModule,
 		CommonModule,
 		MatTabsModule,
 		MatIconModule,
+		MatMenuModule,
 		MatInputModule,
 		MatChipsModule,
 		MatDialogModule,

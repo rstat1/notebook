@@ -9,7 +9,7 @@ import { DataCacheService } from 'app/services/data-cache.service';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
 import { PageTag, Page, NotebookReference, NewPageResponse } from 'app/services/api/QueryResponses';
 import { AreYouSureDialogComponent } from 'app/notes/notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
-import { NewNotebookDialogComponent } from './new-notebook-dialog/new-notebook-dialog.component';
+import { NamePromptDialogComponent } from './new-notebook-dialog/new-notebook-dialog.component';
 
 @Component({
 	selector: 'app-notes-list',
@@ -164,7 +164,12 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		}
 	}
 	public addNotebook() {
-		var notebookName = this.dialog.open(NewNotebookDialogComponent, { width: '500px', disableClose: true, autoFocus: true, data: {} });
+		var notebookName = this.dialog.open(NamePromptDialogComponent, {
+			width: '500px',
+			disableClose: true,
+			autoFocus: true,
+			data: { dialogType: "notebook" }
+		});
 		notebookName.afterClosed().subscribe(newName => {
 			if (newName != "") {
 				this.api.NewNotebook(newName).subscribe(resp => {
@@ -177,6 +182,30 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 				}, error => { this.showMessage("Failed: " + error); })
 			}
 		})
+	}
+	public addTag() {
+		var notebookName = this.dialog.open(NamePromptDialogComponent, {
+			width: '500px',
+			disableClose: true,
+			autoFocus: true,
+			data: { dialogType: "tag" }
+		});
+		notebookName.afterClosed().subscribe(newName => {
+			if (newName != "") {
+				this.api.NewTag(newName).subscribe(resp => {
+					if (resp.status == "success") {
+						if (this.cache.tags.length == 0) {
+							this.showMessage("Your journey begins here, with your first successful tag creation.");
+						} else if (this.cache.tags.length > 0 && this.cache.tags.length < 10) {
+							this.showMessage("Your power grows, with each new tag you create!")
+						} else {
+							this.showMessage("Having created a multitude of different tags, you've risen through the ranks to that of Tag Master! Congratulations.")
+						}
+						this.cache.tags.push(JSON.parse(resp.response));
+					}
+				}, error => { this.showMessage("Add tag failed: " + error) });
+			}
+		});
 	}
 	public deletePage(pageID: string, pageTitle: string) {
 		var areYouSure = this.dialog.open(AreYouSureDialogComponent, {

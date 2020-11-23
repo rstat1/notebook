@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { DataCacheService } from 'app/services/data-cache.service';
 
 @Component({
@@ -7,26 +7,43 @@ import { DataCacheService } from 'app/services/data-cache.service';
 	templateUrl: './new-notebook-dialog.component.html',
 	styleUrls: ['./new-notebook-dialog.component.css']
 })
-export class NewNotebookDialogComponent implements OnInit {
+export class NamePromptDialogComponent implements OnInit {
 	public enteredName: string = "";
+	public dialogType: string = "notebook";
 	public enteredNameProperly: boolean = true;
 	public errorMessage: string = " already exists. Pick another name.";
 
-	constructor(public dialogRef: MatDialogRef<NewNotebookDialogComponent>, private cache: DataCacheService) { }
+	constructor(public dialogRef: MatDialogRef<NamePromptDialogComponent>, private cache: DataCacheService,
+		@Inject(MAT_DIALOG_DATA) public data: any) { }
 
 	ngOnInit(): void {
+		this.dialogType = <string>this.data.dialogType;
 	}
 	public save() {
-		this.cache.getNotebookList(false).subscribe(resp => {
-			resp.forEach((notebook) => {
-				if (notebook.name == this.enteredName) {
-					this.enteredNameProperly = false;
+		if (this.dialogType == "notebook") {
+			this.cache.getNotebookList(false).subscribe(resp => {
+				resp.forEach((notebook) => {
+					if (notebook.name == this.enteredName) {
+						this.enteredNameProperly = false;
+					}
+				})
+				if (this.enteredNameProperly) {
+					this.dialogRef.close(this.enteredName);
 				}
 			})
-			if (this.enteredNameProperly) {
-				this.dialogRef.close(this.enteredName);
-			}
-		})
+		} else if (this.dialogType == "tag") {
+			this.enteredName = this.enteredName.split(' ').join('-');
+			this.cache.getTagList().subscribe(resp => {
+				resp.forEach((tag) => {
+					if (tag.tagValue == this.enteredName) {
+						this.enteredNameProperly = false;
+					}
+				})
+				if (this.enteredNameProperly) {
+					this.dialogRef.close(this.enteredName);
+				}
+			})
+		}
 	}
 	public close() {
 		this.dialogRef.close("");

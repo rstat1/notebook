@@ -39,6 +39,8 @@ export class DataCacheService {
 					this.tags.forEach(p => {
 						this.tagMap.set(p.tagId, p.tagValue);
 					});
+				} else {
+					this.tags = new Array<PageTag>();
 				}
 				this.tagsListSubject.next(this.tags);
 			});

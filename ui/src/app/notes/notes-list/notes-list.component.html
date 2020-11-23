@@ -10,9 +10,17 @@
 						<mat-icon class="action-button-icon">delete</mat-icon> Delete Notebook
 					</button>
 					<span style="flex: 1 1 auto"></span>
-					<button style="margin-right: 14px;" class="action-button" matTooltipPosition="below" matTooltip="Settings" mat-icon-button>
-						<mat-icon style="margin-left: 4px;" class="action-button-icon">admin_panel_settings</mat-icon>
+					<button [matMenuTriggerFor]="menu" style="margin-right: 14px;" class="action-button" mat-icon-button>
+						<mat-icon style="margin-left: 4px;" class="action-button-icon">more_vert</mat-icon>
 					</button>
+					<mat-menu #menu="matMenu">
+						<button (click)="addTag()" mat-menu-item style="margin-right: 10px">
+							<mat-icon style="color:#A83D3E;margin-right: 8px;">add</mat-icon>Add Tag
+						</button>
+						<button mat-menu-item style="margin-right: 10px">
+							<mat-icon style="color:#A83D3E;margin-right: 8px;">admin_panel_settings</mat-icon>Settings
+						</button>
+					</mat-menu>
 				</mat-toolbar>
 			</div>
 			<span style="display:block;height:92vh;padding-top:20px;" malihu-scrollbar [scrollbarOptions]="scrollbarOptions">
@@ -37,11 +45,14 @@
 						<mat-icon>expand_more</mat-icon>
 						<div class="dropdown-box" [class.dropdown-shown]="showSearch == true" [class.dropdown-hidden]="showSearch == false"
 							 malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="margin-left: 372px;">
-							<mat-chip-list multiple style="margin-left: 10px;" class="chip-list chip-list-list-item">
+							<mat-chip-list *ngIf="this.docTags.length > 0" multiple style="margin-left: 10px;"
+										   class="chip-list chip-list-list-item">
 								<mat-chip style="border-radius: 0;" [selectable]="true" [selected]="selectedTags.value.has(tag.tagId)"
 										  (click)="tagClicked(tag.tagId)" *ngFor="let tag of docTags" [value]="tag.tagId"> {{tag.tagValue}}
 								</mat-chip>
 							</mat-chip-list>
+							<div style="text-align: center;font-style:italic;padding:12px;" *ngIf="this.docTags.length == 0">There is a distinct
+								lack of tags here. Maybe you should add some.</div>
 						</div>
 					</div>
 					<button mat-button (click)="newDocument()">
@@ -55,8 +66,7 @@
 						<div style="flex: 2;">
 							<span style="display: flex;">{{note.title}} </span>
 							<mat-chip-list class="chip-list chip-list-list-item">
-								<i-feather class="md-icon" name="tag" matTooltipPosition="below" matTooltip="Tags">
-								</i-feather>
+								<i-feather class="md-icon" name="tag" matTooltipPosition="below" matTooltip="Tags"></i-feather>
 								<mat-basic-chip style="display: flex;" class="status-chip-list-item" *ngFor="let t of note.tags">
 									<span style="margin-top:1px;">{{getTagValue(t)}}</span>
 								</mat-basic-chip>

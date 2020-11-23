@@ -92,19 +92,19 @@ func (data *DataStore) NewPage(page Page, notebookID string) error {
 }
 
 //NewTag ...
-func (data *DataStore) NewTag(tag PageTag) error {
+func (data *DataStore) NewTag(tag PageTag) (PageTag, error) {
 	if err := data.checkConnection(); err != nil {
-		return err
+		return PageTag{}, err
 	}
 	inserted, err := data.insertUniqueItem(data.tagsColName, tag, bson.M{"tagvalue": tag.TagValue})
 	if !inserted {
-		return errors.New("this tag already exists")
+		return PageTag{}, errors.New("this tag already exists")
 	}
 	if err == nil {
 		data.Cache.DeleteString("notescache", data.tagsColName)
-		return nil
+		return tag, nil
 	}
-	return err
+	return PageTag{}, err
 }
 
 //NewNotebook ...
