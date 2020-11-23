@@ -44,7 +44,7 @@ func NewAPIRouter(dataStore *data.DataStore, routes *vestigo.Router, dev bool, v
 func (api *Routes) InitAPIRoutes() {
 	api.router.Handle("/api/ash/auth/token", common.RequestWrapper(common.Nothing, "GET", api.authcode))
 
-	api.router.Handle("/api/ash/user/apikeys/:user", common.RequestWrapper(api.user.NotAnAPIKey, "POST", api.apikeys))
+	api.router.Handle("/api/ash/user/apikeys", common.RequestWrapper(api.user.NotAnAPIKey, "GET", api.apikeys))
 	api.router.Handle("/api/ash/user/apikey/new", common.RequestWrapper(api.user.NotAnAPIKey, "POST", api.newapikey))
 	api.router.Handle("/api/ash/user/apikey", common.RequestWrapper(api.user.NotAnAPIKey, "DELETE", api.deleteapikey))
 
@@ -122,7 +122,7 @@ func (api *Routes) newapikey(resp http.ResponseWriter, r *http.Request) {
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
 			keyDetails.Creator = username
 			if newKeyResp, err := api.data.NewAPIKey(keyDetails); err == nil {
-				common.WriteAPIResponseStruct(resp, common.CreateAPIRespFromObject(newKeyResp, nil, 500))
+				common.WriteResponse(resp, 500, newKeyResp, err)
 			} else {
 				common.WriteFailureResponse(err, resp, "newapikey", 500)
 			}
@@ -145,7 +145,7 @@ func (api *Routes) deleteapikey(resp http.ResponseWriter, r *http.Request) {
 			if username != string(delReq.Creator) {
 				common.WriteFailureResponse(errors.New("forbidden"), resp, "deleteapikey", 403)
 			} else {
-				api.data.DeleteAPIKey(delReq.ID)
+				common.WriteResponse(resp, 400, nil, api.data.DeleteAPIKey(delReq.ID))
 			}
 		} else {
 			common.WriteFailureResponse(err, resp, "deleteapikey", 500)

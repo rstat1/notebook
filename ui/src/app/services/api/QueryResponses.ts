@@ -47,7 +47,14 @@ export class NewPageResponse {
 		this.successful = status == "success" ? true : false;
 	}
 }
-
+export class NewAPITokenRequest {
+	public scopes: string;
+	public description: string;
+	constructor(Scopes: string, Description: string) {
+		this.scopes = Scopes;
+		this.description = Description;
+	}
+}
 export class DeleteAPITokenRequest {
 	public id: string;
 	public creator: string;

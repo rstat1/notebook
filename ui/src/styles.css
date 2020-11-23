@@ -282,3 +282,8 @@ hr {
 .page-container {
     height: 100%;
 }
+.tab-content {
+    display:flex;
+    flex-wrap:wrap;
+    margin-top:17px;
+}

@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 import { Observable } from 'rxjs';
 import { ConfigService } from "app/services/config.service";
-import { APIToken, DeleteAPITokenRequest, NewPageRequest } from 'app/services/api/QueryResponses';
+import { APIToken, DeleteAPITokenRequest, NewAPITokenRequest, NewPageRequest } from 'app/services/api/QueryResponses';
 
 export class AuthRequest {
 	public Username: string;
@@ -50,11 +50,11 @@ export class APIService {
 	public GetPages(notebookID: string): Observable<APIResponse> {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID));
 	}
+	public GetAPITokens(): Observable<APIResponse> {
+		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("user/apikeys"));
+	}
 	public FilterNotesByTags(tags: string[], notebookID: string): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/withtags"), JSON.stringify(tags))
-	}
-	public NewAPIToken(token: APIToken): Observable<APIResponse> {
-		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("apikey/new"), JSON.stringify(token));
 	}
 	public NewPage(newPage: FormData): Observable<APIResponse> {
 		return this.postFormRequest(ConfigService.GetAPIURLFor("notebook/page"), newPage)
@@ -65,8 +65,11 @@ export class APIService {
 	public NewNotebook(name: string): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebook/new"), name);
 	}
+	public NewAPIToken(request: NewAPITokenRequest): Observable<APIResponse> {
+		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("user/apikey/new"), JSON.stringify(request));
+	}
 	public DeleteAPIToken(tokenID: string, creator: string): Observable<APIResponse> {
-		return this.deleteRequest<DeleteAPITokenRequest>(new DeleteAPITokenRequest(tokenID, creator), "apikey");
+		return this.deleteRequest<DeleteAPITokenRequest>(new DeleteAPITokenRequest(tokenID, creator), "user/apikey");
 	}
 	public DeletePage(pageID: string, notebookID: string): Observable<APIResponse> {
 		return this.http.delete<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/ripout/" + pageID));

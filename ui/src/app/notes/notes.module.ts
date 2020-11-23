@@ -5,8 +5,9 @@ import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
 import {
-	MatIconModule, MatGridListModule, MatButtonModule, MatTabsModule, MatInputModule, MatChipsModule,
-	MatToolbarModule, MatDialogModule, MatButtonToggleModule, MatTooltipModule, MatMenuModule
+	MatIconModule, MatGridListModule, MatButtonModule, MatTabsModule, MatInputModule, MatChipsModule, MatTableModule,
+	MatToolbarModule, MatDialogModule, MatButtonToggleModule, MatTooltipModule, MatMenuModule, MatCheckboxModule,
+	MatPaginatorModule
 } from '@angular/material';
 
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
@@ -23,6 +24,8 @@ import { BlocksListComponent, BlocksListItem } from 'app/notes/blocks-list/block
 import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
 import { AreYouSureDialogComponent } from './notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
 import { NamePromptDialogComponent } from './notes-list/new-notebook-dialog/new-notebook-dialog.component';
+import { SettingsPanelComponent } from './settings-panel/settings-panel.component';
+import { APITokensComponent } from './settings-panel/apitokens/apitokens.component';
 
 const icons = { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare, Trash2, BookOpen };
 
@@ -82,6 +85,8 @@ export function markedOptionsFactory(): MarkedOptions {
 		BlockListItemComponent,
 		AreYouSureDialogComponent,
 		NamePromptDialogComponent,
+		SettingsPanelComponent,
+		APITokensComponent,
 	],
 	imports: [
 		FormsModule,
@@ -89,13 +94,16 @@ export function markedOptionsFactory(): MarkedOptions {
 		MatTabsModule,
 		MatIconModule,
 		MatMenuModule,
+		MatTableModule,
 		MatInputModule,
 		MatChipsModule,
 		MatDialogModule,
 		MatButtonModule,
 		MatToolbarModule,
 		MatTooltipModule,
+		MatCheckboxModule,
 		MatGridListModule,
+		MatPaginatorModule,
 		MatButtonToggleModule,
 		NotebookListItemModule,
 		FeatherModule.pick(icons),

@@ -1,0 +1,92 @@
+<div class="tab-content">
+	<div style="flex: 0 0 33.3333333333%;">
+		<p class="admin-description-text">API Tokens allow programatic access to any of your Notebook data. This access is limited by the set of
+			permissions (or scopes) granted to the token when you create it.</p>
+	</div>
+	<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="content-height" style="flex: 0 0 66.6666666667%;height:79vh;">
+		<h4 style="margin-bottom:10px;">Add a new API Token</h4>
+		<mat-form-field class="login-register-text-box" style="min-width: 400px;">
+			<input [(ngModel)]="this.description" matInput placeholder="Token Description" name="appname" required>
+		</mat-form-field>
+		<div *ngIf="this.gotToken" style="border: 1px #98959A;padding:20px;margin-bottom: 1.25em;">
+			<div style="margin-bottom:4px;">Here's your new API token. Treat it like a password, because it has the same power as one.</div>
+			<pre>{{apiToken}}</pre>
+		</div>
+		<h4 style="margin-bottom:10px;">Scopes</h4>
+		<div class="token-scope">
+			<mat-checkbox (change)="scopeChanged('notebook')" color="primary" required style="display:block">
+				<b style="font-family: 'PT Mono', monospace;">notebook</b>
+			</mat-checkbox>
+			<p style="margin-left:28px;margin-bottom: 7px;">Grants full notebook privileges. This means the ability read, write and delete any of
+				the user's existing notebooks, and the ability to create new ones</p>
+			<div class="token-scope token-sub-scope">
+				<mat-checkbox (change)="scopeChanged('notebook:read')" color="primary" required style="display:block">
+					<b style="font-family: 'PT Mono', monospace;">notebook:read</b>
+				</mat-checkbox>
+				<p style="margin-left:28px">Grants read-only notebook privileges. If used by itself the token will be limited to read access to a
+					user's notebooks</p>
+			</div>
+			<div class="token-scope token-sub-scope">
+				<mat-checkbox (change)="scopeChanged('notebook:write')" color="primary" required style="display:block">
+					<b style="font-family: 'PT Mono', monospace;">notebook:write</b>
+				</mat-checkbox>
+				<p style="margin-left:28px">Grants notebook write privileges. If used by itself the token will be limited to write access to a
+					user's notebooks</p>
+			</div>
+			<div class="token-scope token-sub-scope">
+				<mat-checkbox (change)="scopeChanged('notebook:create')" color="primary" required style="display:block">
+					<b style="font-family: 'PT Mono', monospace;">notebook:create</b>
+				</mat-checkbox>
+				<p style="margin-left:28px">Grants notebook creation privileges. If used by itself the token will only be capable of creating new
+					notebooks, that it can't be used to read or write to.</p>
+			</div>
+			<div class="token-scope token-sub-scope">
+				<mat-checkbox (change)="scopeChanged('notebook:delete')" color="primary" required style="display:block">
+					<b style="font-family: 'PT Mono', monospace;">notebook:delete</b>
+				</mat-checkbox>
+				<p style="margin-left:28px">Grants notebook delete privileges. If used by itself the token will only be allowed to delete a
+					notebook. </p>
+			</div>
+		</div>
+		<div class="token-scope">
+			<mat-checkbox (change)="scopeChanged('tags')" color="primary" required style="display:block">
+				<b style="font-family: 'PT Mono', monospace;">tags</b>
+			</mat-checkbox>
+			<p style="margin-left:28px">This scope allows the user of the token to create and delete new tags</p>
+		</div>
+		<div *ngIf="this.auth.UserIsRoot" class="token-scope">
+			<mat-checkbox (change)="scopeChanged('admin')" color="primary" required style="display:block">
+				<b style="font-family: 'PT Mono', monospace;">admin</b>
+			</mat-checkbox>
+			<p style="margin-left:28px;margin-bottom: 7px;">Grants access to the admin bits of Notebook. Only available to the "root" user.</p>
+		</div>
+		<button [disabled]="this.getSaveButtonState()" type="submit" class="save-button" color="primary" mat-raised-button (click)="save()"> Save
+		</button>
+		<h4 style="margin-top:21px;margin-bottom:10px;">Active API tokens</h4>
+		<mat-table class="mat-elevation-z8" *ngIf="hasActiveTokens" [dataSource]="dataSource">
+			<ng-container matColumnDef="Name">
+				<mat-header-cell *matHeaderCellDef>Name</mat-header-cell>
+				<mat-cell *matCellDef="let element"> {{element.description}} </mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Created">
+				<mat-header-cell *matHeaderCellDef>Created On</mat-header-cell>
+				<mat-cell *matCellDef="let element"> {{element.createdAt}} </mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Scopes">
+				<mat-header-cell *matHeaderCellDef>Scopes</mat-header-cell>
+				<mat-cell *matCellDef="let element"> {{element.scopes}} </mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Action">
+				<mat-header-cell *matHeaderCellDef></mat-header-cell>
+				<mat-cell *matCellDef="let element">
+					<button (click)="deleteToken(element.id)" color="warn" id="versionMenu" mat-button> Delete </button>
+				</mat-cell>
+			</ng-container>
+			<mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+			<mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+		</mat-table>
+		<div *ngIf="!hasActiveTokens" class="settings-message">
+			<p style="text-align:center;">{{noTokensMessage}}</p>
+		</div>
+	</div>
+</div>

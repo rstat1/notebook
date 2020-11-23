@@ -7,9 +7,10 @@ import { Component, OnInit, AfterViewInit, ChangeDetectorRef, NgZone, ViewChild,
 import { APIService } from 'app/services/api/api.service';
 import { DataCacheService } from 'app/services/data-cache.service';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
+import { SettingsPanelComponent } from 'app/notes/settings-panel/settings-panel.component';
 import { PageTag, Page, NotebookReference, NewPageResponse } from 'app/services/api/QueryResponses';
 import { AreYouSureDialogComponent } from 'app/notes/notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
-import { NamePromptDialogComponent } from './new-notebook-dialog/new-notebook-dialog.component';
+import { NamePromptDialogComponent } from 'app/notes/notes-list/new-notebook-dialog/new-notebook-dialog.component';
 
 @Component({
 	selector: 'app-notes-list',
@@ -20,10 +21,8 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild('search') filterDropdown: ElementRef<HTMLElement>;
 
 	public filterSize: number = 0;
-	public filterText: string = "";
 	public pageContent: string = "";
 	public activeNotebookID: string;
-	public activeNotebokName: string;
 	public activePageID: string = "";
 	public showSearch: boolean = false;
 	public notes: Page[] = new Array<Page>();
@@ -31,15 +30,8 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	public docTagsMap: Map<string, string> = new Map();
 	public selectedTags: FormControl = new FormControl(new Set());
 	public notebooks: NotebookReference[] = new Array<NotebookReference>();
-	public filteredProjects: NotebookReference[] = new Array<NotebookReference>();
-	public scrollbarOptions = {
-		scrollInertia: 0,
-		theme: 'dark',
-		scrollbarPosition: "inside",
-		alwaysShowScrollbar: 0,
-		autoHideScrollbar: true,
-	};
 	public listEmptyMessage: string = "This notebook is ready and eager for you to write exciting new things in it.";
+	public scrollbarOptions = { scrollInertia: 0, theme: 'dark', scrollbarPosition: "inside", alwaysShowScrollbar: 0, autoHideScrollbar: true };
 
 	constructor(private router: Router, private route: ActivatedRoute, private api: APIService, private focusMon: FocusMonitor,
 		private cdr: ChangeDetectorRef, private zone: NgZone, private dialog: MatDialog, private cache: DataCacheService,
@@ -92,6 +84,15 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 		if (this.filterDropdown) {
 			this.focusMon.stopMonitoring(this.filterDropdown);
 		}
+	}
+	public showSettingsPanel() {
+		var newPage = this.dialog.open(SettingsPanelComponent, {
+			width: '1225px',
+			height: '925px',
+			autoFocus: true,
+			disableClose: true,
+			data: { activeNotebook: this.activeNotebookID }
+		});
 	}
 	public showMenu(which: string, event: MouseEvent) {
 		this.showSearch = !this.showSearch;

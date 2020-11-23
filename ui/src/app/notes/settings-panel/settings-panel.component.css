@@ -1,0 +1,19 @@
+@media (max-height: 650px) {
+    .content-height {
+        max-height:83vh
+    }
+}
+@media (min-height: 940px) {
+    .content-height {
+        max-height:90vh
+    }
+}
+.admin-description-text {
+	line-height: 1.75;
+	margin-right: 24px;
+}
+.tab-content {
+    display:flex;
+    flex-wrap:wrap;
+    margin-top:10px;
+}
