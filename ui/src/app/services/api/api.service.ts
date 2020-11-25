@@ -53,6 +53,9 @@ export class APIService {
 	public GetAPITokens(): Observable<APIResponse> {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("user/apikeys"));
 	}
+	public GetSharedPage(id: string): Observable<APIResponse> {
+		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("sharing/" + id))
+	}
 	public FilterNotesByTags(tags: string[], notebookID: string): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/withtags"), JSON.stringify(tags))
 	}
@@ -67,6 +70,9 @@ export class APIService {
 	}
 	public NewAPIToken(request: NewAPITokenRequest): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("user/apikey/new"), JSON.stringify(request));
+	}
+	public NewSharedPage(pageID: string, notebookID: string): Observable<APIResponse> {
+		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("sharing/share"), JSON.stringify({ "page": pageID, "notebook": notebookID }));
 	}
 	public DeleteAPIToken(tokenID: string, creator: string): Observable<APIResponse> {
 		return this.deleteRequest<DeleteAPITokenRequest>(new DeleteAPITokenRequest(tokenID, creator), "user/apikey");

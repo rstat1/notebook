@@ -35,8 +35,8 @@ func (notesAPI *ServiceAPI) GetPages(notebookID string) ([]data.Page, error) {
 }
 
 //GetPageMetadata ...
-func (notesAPI *ServiceAPI) GetPageMetadata(pageID string) (data.Page, error) {
-	return notesAPI.data.GetPageByID(pageID)
+func (notesAPI *ServiceAPI) GetPageMetadata(pageID, notebookID string) (data.Page, error) {
+	return notesAPI.data.GetPageByID(pageID, notebookID)
 }
 
 //GetNotebooks ...
@@ -73,7 +73,7 @@ func (notesAPI *ServiceAPI) ReadPage(pageID, notebookID string) (string, error) 
 	} else {
 		if contentKey, err := notesAPI.vaultClient.ReadKeyFromKV(notebookID + "/" + pageID); err == nil {
 			common.LogError("", json.Unmarshal([]byte(contentKey), &entryCryptoKey))
-			if masterKey, err := notesAPI.vaultClient.UnsealKey("notebook", entryCryptoKey.SealedMasterKey, crypto.Context{"pageiD": pageID}); err == nil {
+			if masterKey, err := notesAPI.vaultClient.UnsealKey(entryCryptoKey.SealedMasterKey, crypto.Context{"pageiD": pageID}); err == nil {
 				entryKey.Unseal(masterKey[:], entryCryptoKey.EntryKey)
 				decryptor, err := sio.DecryptReader(file, sio.Config{Key: entryKey[:], MinVersion: sio.Version20})
 				fileContent, err := ioutil.ReadAll(decryptor)
@@ -132,7 +132,7 @@ func (notesAPI *ServiceAPI) writePageContentToDisk(content, pageID, notebookID s
 	wd, _ := os.Getwd()
 	path := wd + "/notebooks/" + notebookID + "/" + pageID
 
-	if vKey, vSealed, err := notesAPI.vaultClient.GenerateKey("notebook", crypto.Context{"pageID": pageID}); err == nil {
+	if vKey, vSealed, err := notesAPI.vaultClient.GenerateKey(crypto.Context{"pageID": pageID}); err == nil {
 		cryptoKey := crypto.GenerateKey(vKey[:], "notes/"+notebookID+"/"+pageID)
 		sealed, _ := cryptoKey.Seal(vKey[:], notebookID+"/"+pageID)
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0600)

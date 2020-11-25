@@ -1,0 +1,12 @@
+<div class="page-container" style="background-color: #424242;margin-left: 15%; margin-right: 15%;">
+	<div style="flex-direction: row;" class="page-content page-width">
+		<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="background-color:#252525;flex: 1;" *ngIf="this.pageContent != ''">
+			<div style="margin: 20px;">
+				<markdown class="editor-element task-description" [data]="this.pageContent"></markdown>
+			</div>
+		</div>
+		<div style="display: flex; flex: 1;justify-content: center;align-items: center;" *ngIf="this.pageContent == ''">
+			<i-feather style="transform: translate(0, -50%);width:72px;height:72px;" name="book-open"></i-feather>
+		</div>
+	</div>
+</div>

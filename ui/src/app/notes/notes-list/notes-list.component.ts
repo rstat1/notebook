@@ -258,6 +258,11 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			}, error => { this.showMessage("Failed: " + error); });
 		}
 	}
+	public share(id: string) {
+		this.api.NewSharedPage(id, this.activeNotebookID).subscribe(resp => {
+			console.log(resp)
+		}, error => { this.showMessage("Failed: " + error); })
+	}
 	public isActiveNB(id: string): boolean {
 		return id === this.activeNotebookID;
 	}

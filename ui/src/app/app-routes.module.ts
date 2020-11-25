@@ -8,6 +8,7 @@ const routes: Routes = [
 	{ path: 'auth', component: AuthComponent, pathMatch: "full" },
 	{ path: 'home', redirectTo: "/nb", canActivate: [AuthGuard] },
 	{ path: 'nb', loadChildren: () => import('app/notes/notes.module').then(m => m.NotesModule), canActivate: [AuthGuard] },
+	{ path: 'shared', loadChildren: () => import('app/notes/notes.module').then(m => m.NotesModule) },
 	{ path: '', redirectTo: "/nb", pathMatch: 'full' }
 ];
 

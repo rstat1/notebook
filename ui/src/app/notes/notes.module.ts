@@ -19,14 +19,15 @@ import { AuthGuard } from 'app/services/auth/auth.guard';
 import { NotesRootComponent } from 'app/notes/notes-root/notes-root.component';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
 import { NotesListComponent } from 'app/notes/notes-list/notes-list.component';
+import { SharedNoteComponent } from 'app/notes/shared-note/shared-note.component';
 import { ListOverlayComponent } from 'app/notes/list-overlay/list-overlay.component';
+import { SettingsPanelComponent } from 'app/notes/settings-panel/settings-panel.component';
+import { APITokensComponent } from 'app/notes/settings-panel/apitokens/apitokens.component';
 import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
 import { BlocksListComponent, BlocksListItem } from 'app/notes/blocks-list/blocks-list.component';
 import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
-import { AreYouSureDialogComponent } from './notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
-import { NamePromptDialogComponent } from './notes-list/new-notebook-dialog/new-notebook-dialog.component';
-import { SettingsPanelComponent } from './settings-panel/settings-panel.component';
-import { APITokensComponent } from './settings-panel/apitokens/apitokens.component';
+import { AreYouSureDialogComponent } from 'app/notes/notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
+import { NamePromptDialogComponent } from 'app/notes/notes-list/new-notebook-dialog/new-notebook-dialog.component';
 
 const icons = { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare, Trash2, BookOpen };
 
@@ -41,9 +42,8 @@ const notesRoutes = [
 			{ path: 'new', component: DocEditorComponent },
 			{ path: ':nbid', component: NotesListComponent, pathMatch: 'full' },
 			{ path: ':nbid/page/:page', component: NotesListComponent, pathMatch: 'full' },
-
 		]
-	}
+	}, { path: 'shared/:sharedID', component: SharedNoteComponent, pathMatch: 'full' },
 ];
 
 export function markedOptionsFactory(): MarkedOptions {
@@ -80,14 +80,15 @@ export function markedOptionsFactory(): MarkedOptions {
 		BlocksListItem,
 		DocEditorComponent,
 		NotesRootComponent,
+		APITokensComponent,
 		NotesListComponent,
+		SharedNoteComponent,
 		BlocksListComponent,
 		ListOverlayComponent,
+		SettingsPanelComponent,
 		BlockListItemComponent,
 		AreYouSureDialogComponent,
 		NamePromptDialogComponent,
-		SettingsPanelComponent,
-		APITokensComponent,
 	],
 	imports: [
 		FormsModule,

@@ -41,6 +41,12 @@ type NewAPIKeyRequest struct {
 	Description string `json:"description"`
 }
 
+//SharePageRequest ...
+type SharePageRequest struct {
+	PageID     string `json:"page"`
+	NotebookID string `json:"notebook"`
+}
+
 //UserAPIKey ...
 type UserAPIKey struct {
 	ID          string `json:"id"`
@@ -120,6 +126,18 @@ type AuthInfo struct {
 	AuthenticatedUsers     []AuthenticatedUsers     `json:"authenticatedUsers"`
 }
 
+//TagFilterResult ...
 type TagFilterResult []struct {
 	Pages []Page `json:"pages"`
 }
+
+//SharedPage ...
+type SharedPage struct {
+	ID          string `json:"id"`
+	Owner       string `json:"owner"`
+	PageID      string `json:"pageID"`
+	NotebookID  string `json:"notebookID"`
+	AccessToken string `json:"accessToken"`
+}
+
+//https://notebook.alargerobot.dev/shared/h9JkVAc0kdjf9e8hfj

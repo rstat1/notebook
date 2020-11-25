@@ -35,7 +35,7 @@ components-list-item {
 	flex-direction: column;
 	width: 100%;
 }
-components-login, components-register, components-list, app-project-page, app-admin-root, app-new-project, app-notes-root, app-notes-list {
+components-login, components-register, components-list, app-project-page, app-admin-root, app-new-project, app-notes-root, app-notes-list, app-shared-note {
 	width: 100%;
 }
 component-project-list{

@@ -61,12 +61,12 @@ func NewVaultKMS(dev bool) *VaultKMS {
 }
 
 //GenerateKey Generates a data key. Returns plaintext and encrypted (or "sealed") forms of the key. Or an error.
-func (kms *VaultKMS) GenerateKey(keyID string, ctx Context) (key [32]byte, sealed []byte, e error) {
+func (kms *VaultKMS) GenerateKey(ctx Context) (key [32]byte, sealed []byte, e error) {
 	if bytes, err := json.Marshal(&ctx); err == nil {
 		payload := map[string]interface{}{
 			"context": base64.StdEncoding.EncodeToString(bytes),
 		}
-		if newKey, err := kms.client.Logical().Write(vaultDataKeyEndpoint+keyID, payload); err == nil {
+		if newKey, err := kms.client.Logical().Write(vaultDataKeyEndpoint+kms.serviceName, payload); err == nil {
 			sealedKey := newKey.Data["ciphertext"].(string)
 			if notsealed, err := base64.StdEncoding.DecodeString(newKey.Data["plaintext"].(string)); err != nil {
 				return key, sealed, err
@@ -156,13 +156,13 @@ func (kms *VaultKMS) DeleteKeyFromKV(path string) error {
 }
 
 //UnsealKey Unseals the provided key using the provided master key. Returns plaintext key. Or an error.
-func (kms *VaultKMS) UnsealKey(keyID string, sealedKey []byte, ctx Context) (key [32]byte, e error) {
+func (kms *VaultKMS) UnsealKey(sealedKey []byte, ctx Context) (key [32]byte, e error) {
 	if bytes, err := json.Marshal(&ctx); err == nil {
 		payload := map[string]interface{}{
 			"ciphertext": string(sealedKey),
 			"context":    base64.StdEncoding.EncodeToString(bytes),
 		}
-		if unsealed, err := kms.client.Logical().Write(vaultDecryptEndpoint+keyID, payload); err == nil {
+		if unsealed, err := kms.client.Logical().Write(vaultDecryptEndpoint+kms.serviceName, payload); err == nil {
 			base64Key := unsealed.Data["plaintext"].(string)
 			if plainKey, err := base64.StdEncoding.DecodeString(base64Key); err == nil {
 				copy(key[:], []byte(plainKey))

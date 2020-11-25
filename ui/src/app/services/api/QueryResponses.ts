@@ -63,3 +63,8 @@ export class DeleteAPITokenRequest {
 		this.creator = Creator;
 	}
 }
+export class SharedPageResponse {
+	public title: string;
+	public lastEdit: string;
+	public content: string;
+}
