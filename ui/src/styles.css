@@ -109,6 +109,9 @@ hr {
 	background-color: #2e2e2e;
 	width:100%;
 }
+.mat-form-field-appearance-standard .mat-form-field-flex {
+	padding: 0px !important;
+}
 .error {
 	font-size: 10pt;
 	height: 15px;

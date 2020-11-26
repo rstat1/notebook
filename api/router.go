@@ -66,6 +66,7 @@ func (api *Routes) InitAPIRoutes() {
 	api.router.Handle("/api/ash/sharing/share", common.RequestWrapper(api.user.NotAnAPIKey, "POST", api.sharepage))
 	api.router.Handle("/api/ash/sharing/unshare/:id", common.RequestWrapper(api.user.NotAnAPIKey, "DELETE", api.unsharepage))
 	api.router.Handle("/api/ash/sharing/:id", common.RequestWrapper(common.Nothing, "GET", api.getsharedpage))
+	api.router.Handle("/api/ash/sharing/allshared", common.RequestWrapper(api.user.NotAnAPIKey, "GET", api.getsharedpages))
 }
 
 func (api *Routes) authcode(resp http.ResponseWriter, r *http.Request) {
@@ -210,8 +211,13 @@ func (api *Routes) newnotebook(resp http.ResponseWriter, r *http.Request) {
 
 func (api *Routes) pages(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "notebook:read") {
-		pages, err := api.notebookSvc.GetPages(vestigo.Param(r, "nbid"))
-		common.WriteResponse(resp, 400, pages, err)
+		username, err := api.user.GetUsernameFromToken(r)
+		if err != nil {
+			common.WriteResponse(resp, 400, nil, err)
+		} else {
+			pages, err := api.notebookSvc.GetPages(vestigo.Param(r, "nbid"), username)
+			common.WriteResponse(resp, 400, pages, err)
+		}
 	} else {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "pages", 401)
 	}
@@ -231,6 +237,10 @@ func (api *Routes) newpage(resp http.ResponseWriter, r *http.Request) {
 			pageContent := r.FormValue("content")
 			if err := json.Unmarshal([]byte(metadata), &newPage); err != nil {
 				common.WriteFailureResponse(err, resp, "newpage", 500)
+				return
+			}
+			if newPage.Metadata.Title == "" {
+				common.WriteResponse(resp, 400, nil, errors.New("this page needs a title"))
 				return
 			}
 			newPage.Content = pageContent
@@ -334,14 +344,17 @@ func (api *Routes) deletetag(resp http.ResponseWriter, r *http.Request) {
 }
 func (api *Routes) sharepage(resp http.ResponseWriter, r *http.Request) {
 	var request data.SharePageRequest
-
 	if username, err := api.user.GetUsernameFromToken(r); err == nil {
 		body, _ := ioutil.ReadAll(r.Body)
 		if err := json.Unmarshal(body, &request); err == nil {
+			if request.PageTitle == "" {
+				common.WriteResponse(resp, 400, nil, common.LogError("", errors.New("this page definitely has a title, what is it?")))
+				return
+			}
 			if creator, err := api.data.GetPageCreator(request.PageID); err == nil {
 				if creator == username {
-					spmd, err := api.data.NewSharedPage(request.PageID, request.NotebookID, username)
-					common.WriteResponse(resp, 400, spmd, err)
+					spmd, err := api.data.NewSharedPage(request, username)
+					common.WriteResponse(resp, 400, spmd.AccessToken, err)
 				} else {
 					common.WriteResponse(resp, 401, nil, common.LogError("", errors.New("not authorized")))
 				}
@@ -356,16 +369,13 @@ func (api *Routes) sharepage(resp http.ResponseWriter, r *http.Request) {
 	}
 }
 func (api *Routes) unsharepage(resp http.ResponseWriter, r *http.Request) {
-	if allowed, err := api.isAccessAllowed(r); allowed {
-		result, err := api.data.DeleteSharedPage(vestigo.Param(r, "id"))
-		common.WriteResponse(resp, 400, result, err)
-	} else {
-		if err != nil {
-			common.WriteResponse(resp, 400, nil, err)
-		} else {
-			common.WriteResponse(resp, 401, nil, errors.New("not authorized"))
-		}
+	username, err := api.user.GetUsernameFromToken(r)
+	if err != nil {
+		common.WriteResponse(resp, 400, nil, err)
+		return
 	}
+	result, err := api.data.DeleteSharedPage(vestigo.Param(r, "id"), username)
+	common.WriteResponse(resp, 400, result, err)
 }
 func (api *Routes) getsharedpage(resp http.ResponseWriter, r *http.Request) {
 	var pageResp = make(map[string]interface{}, 1)
@@ -391,6 +401,19 @@ func (api *Routes) getsharedpage(resp http.ResponseWriter, r *http.Request) {
 			common.WriteResponse(resp, 400, nil, err)
 		}
 	}
+}
+func (api *Routes) getsharedpages(resp http.ResponseWriter, r *http.Request) {
+	username, err := api.user.GetUsernameFromToken(r)
+	if err != nil {
+		common.WriteResponse(resp, 400, nil, err)
+		return
+	}
+	pages, err := api.data.GetSharedPages(username)
+	if err != nil {
+		common.WriteResponse(resp, 400, nil, err)
+		return
+	}
+	common.WriteResponse(resp, 400, pages, err)
 }
 func (api *Routes) isAccessAllowed(r *http.Request) (bool, error) {
 	if username, err := api.user.GetUsernameFromToken(r); err == nil {

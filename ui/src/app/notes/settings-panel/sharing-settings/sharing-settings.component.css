@@ -1,0 +1,19 @@
+.mat-column-Action {
+	max-width:80px;
+}
+.mat-column-Sharing-URL {
+	max-width: 10vw;
+}
+.mat-column-Page-Title {
+	max-width: 30vw;
+}
+.mat-form-field {
+    display: block;
+    position: relative;
+    text-align: left;
+}
+.settings-message {
+    padding: 5px;
+    line-height: 1.3;
+    font-style: italic;
+}

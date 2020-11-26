@@ -17,12 +17,10 @@ import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
 import { AuthComponent } from 'app/components/auth/auth.component';
 import { AuthGuard, RootGuard } from 'app/services/auth/auth.guard';
 import { AuthTokenInjector } from 'app/services/api/AuthTokenInjector';
-import { CommandListComponent, CommandListItem } from 'app/components/command-list/command-list.component';
 
 import { APIService } from 'app/services/api/api.service';
 import { AuthService } from 'app/services/auth/auth.service';
-import { CommandListService } from 'app/components/command-list/command-list.service';
-import { NotebookListItemModule } from './components/notebook-list-item/notebook-list-item.module';
+import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
 
 const icons = { FilePlus, Trash2, List, Sliders };
 
@@ -30,8 +28,6 @@ const icons = { FilePlus, Trash2, List, Sliders };
 	declarations: [
 		AppComponent,
 		AuthComponent,
-		CommandListItem,
-		CommandListComponent,
 	],
 	imports: [
 		FormsModule,
@@ -49,10 +45,8 @@ const icons = { FilePlus, Trash2, List, Sliders };
 		FeatherModule.pick(icons),
 		MalihuScrollbarModule.forRoot(),
 	],
-	providers: [AuthService, APIService, AuthGuard, { provide: HTTP_INTERCEPTORS, multi: true, useClass: AuthTokenInjector },
-		RootGuard, CommandListService],
+	providers: [AuthService, APIService, AuthGuard, { provide: HTTP_INTERCEPTORS, multi: true, useClass: AuthTokenInjector }, RootGuard],
 	bootstrap: [AppComponent],
-	entryComponents: [CommandListComponent]
 })
 export class AppModule {
 	constructor() {

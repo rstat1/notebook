@@ -1,12 +1,26 @@
-<div class="page-container" style="background-color: #424242;margin-left: 15%; margin-right: 15%;">
-	<div style="flex-direction: row;" class="page-content page-width">
-		<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="background-color:#252525;flex: 1;" *ngIf="this.pageContent != ''">
+<div class="page-container shared-note">
+	<div style="flex-direction: row; overflow:auto;height: fit-content;min-height: 100vh;" class="page-content page-width">
+		<div class="md-block" *ngIf="this.pageTitle != ''">
+			<div style="flex: 2;">
+				<span style="display: flex;">{{pageTitle}}</span>
+				<mat-chip-list class="chip-list chip-list-list-item">
+					<i-feather class="md-icon" name="clock" matTooltipPosition="below" matTooltip="Last Edited on"></i-feather>
+					<mat-basic-chip style="display: flex;" class="status-chip-list-item">
+						<span style="margin-top: 1px;">{{lastEdit | date:'MMMM dd, yyyy hh:mm a'}}</span>
+					</mat-basic-chip>
+				</mat-chip-list>
+			</div>
+		</div>
+		<div style="background-color:#252525;flex: 1;" *ngIf="this.pageContent != ''">
 			<div style="margin: 20px;">
 				<markdown class="editor-element task-description" [data]="this.pageContent"></markdown>
 			</div>
 		</div>
-		<div style="display: flex; flex: 1;justify-content: center;align-items: center;" *ngIf="this.pageContent == ''">
-			<i-feather style="transform: translate(0, -50%);width:72px;height:72px;" name="book-open"></i-feather>
+		<div style="display: flex; flex: 1;justify-content: center;align-items: center;flex-direction:column;" *ngIf="this.pageContent == ''">
+			<div>
+				<i-feather style="transform: translate(0, -50%);width:72px;height:72px;" name="book-open"></i-feather>
+			</div>
+			<div style="font-size: 20pt;">This page simply doesn't exist.</div>
 		</div>
 	</div>
 </div>

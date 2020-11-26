@@ -16,6 +16,11 @@ export class Page {
 	public creator: string;
 	public lastEdited: number;
 }
+export class SharedPage {
+	public id: number;
+	public title: string;
+	public accessToken: string;
+}
 export class PageTag {
 	public tagId: string;
 	public tagValue: string;

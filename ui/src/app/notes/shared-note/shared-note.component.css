@@ -6,3 +6,52 @@
 .editor-element {
 	min-height: 202px;
 }
+@media screen {
+    .md-block {
+        width: 250px; 
+        height: 250px;
+        padding: 10px;
+        padding-bottom: 18px;
+        position: fixed;
+        left: 36px;
+        height: max-content;
+        background-color: #424242;
+    }
+    .shared-note {
+        margin-left: 15%; 
+        margin-right: 15%;
+    }
+}
+@media print{
+    .shared-note {}
+    .md-block {
+        display: none;
+    }
+}
+.chip-list {
+    /* color:white; */
+    padding-top:10px;
+    display:block;
+    padding-left:3px;
+    border-top: 1px solid #454545;
+}
+.chip-list-list-item {
+    border: 0;
+}
+.tag-list-item {
+	background-color: #A83D3E;
+}
+.status-chip-list-item {
+    border: 0;
+    padding: 6px;
+    background-color: #1d1d1d;
+    font-size: 9pt;
+    margin-right: 5px;
+}
+.md-icon {
+	width: 18px;
+	height:18px;
+	color:#A83D3E;
+	margin-left:4px;
+	margin-right:4px;
+}

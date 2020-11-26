@@ -1,28 +1,30 @@
 <div style="display: flex;">
 	<div style="display: flex; flex-direction:column;flex:1;">
-		<div style="display: flex;margin-right: 10px;margin-bottom: 6px;">
-			<i-feather style="color:#A83D3E" name="file" matTooltipPosition="below" matTooltip="Title"></i-feather>
-			<span [class.placeholder-text-visible]="showTitlePH == true"
-				  [class.placeholder-text-invisible]="showTitlePH == false" class="placeholder-text">Type title:"" and
-				press enter to set the title</span>
-			<span style="margin-top:4px;margin-left:4px;" *ngIf="showTitlePH == false && title != ''">{{title}}</span>
+		<div style="display: flex;margin-bottom: 5px;">
+			<i-feather name="file" matTooltipPosition="below" matTooltip="Title"></i-feather>
+			<div (input)="titleInput()" class="input-style" contenteditable="true" placeholder="Page title" #titleEdit></div>
 		</div>
-		<div style="display: flex;margin-right: 10px;margin-bottom: 8px;">
-			<i-feather style="color:#A83D3E" name="clock" matTooltipPosition="below" matTooltip="Creation date/time">
+		<div class="timestamp">
+			<i-feather name="clock" matTooltipPosition="below" matTooltip="Creation date/time">
 			</i-feather>
-			<span style="margin-top: 4px;margin-left: 4px;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</span>
+			<span style="margin-top: 4px;margin-left: 5px;">{{currentDate | date:'MMMM dd, yyyy hh:mm a'}}</span>
 		</div>
-		<div style="display: flex;margin-right: 10px;">
-			<i-feather style="color:#A83D3E" name="tag" matTooltipPosition="below" matTooltip="Tags"></i-feather>
-			<span [class.placeholder-text-visible]="showTagsPH == true && tags.length == 0"
-				  [class.placeholder-text-invisible]="showTagsPH == false && tags.length > 0" class="placeholder-text">
-				Type tag: plus the tag name in quotes, and press enter to add a tag </span>
-			<span *ngIf="showTagsPH == false && tags.length > 0">
-				<mat-chip-list class="chip-list chip-list-list-item">
-					<mat-basic-chip class="status-chip-list-item" *ngFor="let t of tags"> {{t.tagValue}}
+		<div class="tag-input-container">
+			<i-feather class="tag-input-icon" name="tag" matTooltipPosition="below" matTooltip="Tags"></i-feather>
+			<mat-form-field appearance="standard"
+							style="width: 800px;margin-left: 5px;border-radius: 0px;background-color:#424242;padding: 0px; min-height: 62px;">
+				<mat-chip-list #chipList aria-label="Page Tags">
+					<mat-basic-chip class="status-chip-list-item" *ngFor="let tag of selectedTags" [removable]="removable"
+									(removed)="remove(tag)">
+						<span matChipRemove>{{tag.tagValue}}</span>
 					</mat-basic-chip>
+					<input placeholder="Page Tags" #tagInput [matAutocomplete]="auto" [matChipInputFor]="chipList" [formControl]="tagFormControl"
+						   [matChipInputSeparatorKeyCodes]="separatorKeysCodes" (matChipInputTokenEnd)="add($event)">
 				</mat-chip-list>
-			</span>
+			</mat-form-field>
+			<mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
+				<mat-option *ngFor="let tag of filteredTags | async" [value]="tag"> {{tag}} </mat-option>
+			</mat-autocomplete>
 		</div>
 	</div>
 	<button matTooltipPosition="below" matTooltip="Save" mat-icon-button (click)="save()">
@@ -34,7 +36,7 @@
 </div>
 <!-- min-width: 500px; height:100px;display:block; -->
 <div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="note-content">
-	<div style="white-space:pre-wrap;" ngPreserveWhitespace #editorBlock (input)="onInput()"
-		 (paste)="removeHTML($event)" (keydown)="keyDown($event)" contenteditable="true"></div>
+	<div style="white-space:pre-wrap;" ngPreserveWhitespace #editorBlock (paste)="removeHTML($event)"
+		 (keydown)="keyDown($event)" contenteditable="true"></div>
 	<div style="display: none;" id="editor-stage"></div>
 </div>

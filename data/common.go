@@ -44,6 +44,7 @@ type NewAPIKeyRequest struct {
 //SharePageRequest ...
 type SharePageRequest struct {
 	PageID     string `json:"page"`
+	PageTitle  string `json:"title"`
 	NotebookID string `json:"notebook"`
 }
 
@@ -136,6 +137,7 @@ type SharedPage struct {
 	ID          string `json:"id"`
 	Owner       string `json:"owner"`
 	PageID      string `json:"pageID"`
+	PageTitle   string `json:"pageTitle"`
 	NotebookID  string `json:"notebookID"`
 	AccessToken string `json:"accessToken"`
 }

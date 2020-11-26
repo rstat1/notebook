@@ -1,14 +1,13 @@
 import { highlight } from 'highlight.js';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
 import {
 	MatIconModule, MatGridListModule, MatButtonModule, MatTabsModule, MatInputModule, MatChipsModule, MatTableModule,
 	MatToolbarModule, MatDialogModule, MatButtonToggleModule, MatTooltipModule, MatMenuModule, MatCheckboxModule,
-	MatPaginatorModule,
-	MatSnackBarModule
+	MatPaginatorModule, MatSnackBarModule, MatAutocompleteModule, MAT_FORM_FIELD_DEFAULT_OPTIONS
 } from '@angular/material';
 
 import { MalihuScrollbarModule } from 'ngx-malihu-scrollbar';
@@ -20,14 +19,13 @@ import { NotesRootComponent } from 'app/notes/notes-root/notes-root.component';
 import { DocEditorComponent } from 'app/notes/doc-editor/doc-editor.component';
 import { NotesListComponent } from 'app/notes/notes-list/notes-list.component';
 import { SharedNoteComponent } from 'app/notes/shared-note/shared-note.component';
-import { ListOverlayComponent } from 'app/notes/list-overlay/list-overlay.component';
 import { SettingsPanelComponent } from 'app/notes/settings-panel/settings-panel.component';
 import { APITokensComponent } from 'app/notes/settings-panel/apitokens/apitokens.component';
-import { BlockListItemComponent } from 'app/notes/block-list-item/block-list-item.component';
-import { BlocksListComponent, BlocksListItem } from 'app/notes/blocks-list/blocks-list.component';
 import { NotebookListItemModule } from 'app/components/notebook-list-item/notebook-list-item.module';
+import { SharingSettingsComponent } from 'app/notes/settings-panel/sharing-settings/sharing-settings.component';
 import { AreYouSureDialogComponent } from 'app/notes/notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
 import { NamePromptDialogComponent } from 'app/notes/notes-list/new-notebook-dialog/new-notebook-dialog.component';
+import { SharingLinkDialogComponent } from 'app/notes/notes-list/sharing-link-dialog/sharing-link-dialog.component';
 
 const icons = { File, FileText, Code, Clock, Tag, Image, List, Bold, Italic, Link2, CheckSquare, Trash2, BookOpen };
 
@@ -77,18 +75,16 @@ export function markedOptionsFactory(): MarkedOptions {
 @NgModule({
 	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	declarations: [
-		BlocksListItem,
 		DocEditorComponent,
 		NotesRootComponent,
 		APITokensComponent,
 		NotesListComponent,
 		SharedNoteComponent,
-		BlocksListComponent,
-		ListOverlayComponent,
 		SettingsPanelComponent,
-		BlockListItemComponent,
+		SharingSettingsComponent,
 		AreYouSureDialogComponent,
 		NamePromptDialogComponent,
+		SharingLinkDialogComponent,
 	],
 	imports: [
 		FormsModule,
@@ -107,6 +103,8 @@ export function markedOptionsFactory(): MarkedOptions {
 		MatCheckboxModule,
 		MatGridListModule,
 		MatPaginatorModule,
+		ReactiveFormsModule,
+		MatAutocompleteModule,
 		MatButtonToggleModule,
 		NotebookListItemModule,
 		FeatherModule.pick(icons),
@@ -114,6 +112,9 @@ export function markedOptionsFactory(): MarkedOptions {
 		RouterModule.forChild(notesRoutes),
 		MarkdownModule.forRoot({ markedOptions: { provide: MarkedOptions, useFactory: markedOptionsFactory } }),
 	],
-	entryComponents: [DocEditorComponent, ListOverlayComponent, BlocksListComponent, BlockListItemComponent],
+	providers: [
+		{ provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { floatLabel: 'never' } }
+	],
+	entryComponents: [DocEditorComponent],
 })
 export class NotesModule { }

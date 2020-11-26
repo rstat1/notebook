@@ -1,0 +1,31 @@
+<div class="tab-content">
+	<div style="flex: 0 0 33.3333333333%;">
+		<p class="admin-description-text">Pages listed here are publicly accessible without authentication. Here you can disable public access to
+			pages.</p>
+	</div>
+	<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="content-height" style="flex: 0 0 66.6666666667%;height:79vh;">
+		<mat-table class="mat-elevation-z8" *ngIf="hasSharedPages" [dataSource]="dataSource">
+			<ng-container matColumnDef="Page Title">
+				<mat-header-cell *matHeaderCellDef>Page Tile</mat-header-cell>
+				<mat-cell *matCellDef="let element"> {{element.pageTitle}} </mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Sharing URL">
+				<mat-header-cell *matHeaderCellDef>Sharing URL</mat-header-cell>
+				<mat-cell *matCellDef="let element"><a style="color: #98959A" target="_blank"
+					   href="{{getSharingURL(element.accessToken)}}">{{element.accessToken}}</a>
+				</mat-cell>
+			</ng-container>
+			<ng-container matColumnDef="Action">
+				<mat-header-cell *matHeaderCellDef></mat-header-cell>
+				<mat-cell *matCellDef="let element">
+					<button (click)="disableSharing(element.id)" color="warn" id="versionMenu" mat-button> Unshare </button>
+				</mat-cell>
+			</ng-container>
+			<mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+			<mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+		</mat-table>
+		<div *ngIf="!hasSharedPages" class="settings-message">
+			<p style="text-align:center;">{{noTokensMessage}}</p>
+		</div>
+	</div>
+</div>

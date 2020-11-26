@@ -56,6 +56,9 @@ export class APIService {
 	public GetSharedPage(id: string): Observable<APIResponse> {
 		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("sharing/" + id))
 	}
+	public GetSharedPages(): Observable<APIResponse> {
+		return this.http.get<APIResponse>(ConfigService.GetAPIURLFor("sharing/allshared"))
+	}
 	public FilterNotesByTags(tags: string[], notebookID: string): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("notebook/" + notebookID + "/withtags"), JSON.stringify(tags))
 	}
@@ -71,8 +74,8 @@ export class APIService {
 	public NewAPIToken(request: NewAPITokenRequest): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("user/apikey/new"), JSON.stringify(request));
 	}
-	public NewSharedPage(pageID: string, notebookID: string): Observable<APIResponse> {
-		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("sharing/share"), JSON.stringify({ "page": pageID, "notebook": notebookID }));
+	public NewSharedPage(pageID: string, notebookID: string, title: string): Observable<APIResponse> {
+		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("sharing/share"), JSON.stringify({ "page": pageID, "notebook": notebookID, "title": title }));
 	}
 	public DeleteAPIToken(tokenID: string, creator: string): Observable<APIResponse> {
 		return this.deleteRequest<DeleteAPITokenRequest>(new DeleteAPITokenRequest(tokenID, creator), "user/apikey");
@@ -85,6 +88,9 @@ export class APIService {
 	}
 	public DeleteTag(tagID: string): Observable<APIResponse> {
 		return this.http.delete<APIResponse>(ConfigService.GetAPIURLFor("tags/delete/" + tagID));
+	}
+	public UnsharePage(id: string): Observable<APIResponse> {
+		return this.http.delete<APIResponse>(ConfigService.GetAPIURLFor("sharing/unshare/" + id));
 	}
 	private deleteRequest<T>(requestInfo: T, route: string): Observable<APIResponse> {
 		const options = {

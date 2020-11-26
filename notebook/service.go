@@ -30,8 +30,8 @@ func NewNBServiceAPI(db *data.DataStore, vault *crypto.VaultKMS) *ServiceAPI {
 }
 
 //GetPages ...
-func (notesAPI *ServiceAPI) GetPages(notebookID string) ([]data.Page, error) {
-	return notesAPI.data.GetContentsOfNotebook(notebookID)
+func (notesAPI *ServiceAPI) GetPages(notebookID, user string) ([]data.Page, error) {
+	return notesAPI.data.GetContentsOfNotebook(notebookID, user)
 }
 
 //GetPageMetadata ...

@@ -11,6 +11,7 @@ import { SettingsPanelComponent } from 'app/notes/settings-panel/settings-panel.
 import { PageTag, Page, NotebookReference, NewPageResponse } from 'app/services/api/QueryResponses';
 import { AreYouSureDialogComponent } from 'app/notes/notes-list/are-you-sure-dialog/are-you-sure-dialog.component';
 import { NamePromptDialogComponent } from 'app/notes/notes-list/new-notebook-dialog/new-notebook-dialog.component';
+import { SharingLinkDialogComponent } from './sharing-link-dialog/sharing-link-dialog.component';
 
 @Component({
 	selector: 'app-notes-list',
@@ -224,7 +225,9 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 						this.pageContent = "";
 						this.router.navigate(["nb", this.activeNotebookID]);
 					}
-				}, error => { this.showMessage("Failed: " + error); })
+				}, error => {
+					this.showMessage(error.error.response);
+				})
 			}
 		})
 	}
@@ -258,10 +261,11 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 			}, error => { this.showMessage("Failed: " + error); });
 		}
 	}
-	public share(id: string) {
-		this.api.NewSharedPage(id, this.activeNotebookID).subscribe(resp => {
-			console.log(resp)
-		}, error => { this.showMessage("Failed: " + error); })
+	public share(id: string, title: string) {
+		this.api.NewSharedPage(id, this.activeNotebookID, title).subscribe(resp => {
+			var sharingID = JSON.parse(resp.response);
+			this.dialog.open(SharingLinkDialogComponent, { width: '500px', disableClose: false, data: { name: title, sharedPageURL: sharingID } });
+		}, error => { this.showMessage("Failed: " + error.error); })
 	}
 	public isActiveNB(id: string): boolean {
 		return id === this.activeNotebookID;

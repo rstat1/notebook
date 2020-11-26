@@ -137,15 +137,16 @@ func (data *DataStore) NewAPIKey(keyRequest NewAPIKeyRequest) (key string, err e
 }
 
 //NewSharedPage ...
-func (data *DataStore) NewSharedPage(pageID, notebookID, owner string) (SharedPage, error) {
+func (data *DataStore) NewSharedPage(sharedPageReq SharePageRequest, username string) (SharedPage, error) {
 	var sharedPageMD SharedPage
 	sharedPageMD.ID = uuid.New().String()
-	sharedPageMD.Owner = owner
-	sharedPageMD.PageID = pageID
-	sharedPageMD.NotebookID = notebookID
+	sharedPageMD.Owner = username
+	sharedPageMD.PageID = sharedPageReq.PageID
+	sharedPageMD.NotebookID = sharedPageReq.NotebookID
+	sharedPageMD.PageTitle = sharedPageReq.PageTitle
 	sharedPageMD.AccessToken = common.RandomID(16)
 
-	inserted, err := data.insertUniqueItem("sharedpages", sharedPageMD, bson.M{"pageID": pageID})
+	inserted, err := data.insertUniqueItem("sharedpages", sharedPageMD, bson.M{"pageID": sharedPageReq.PageID})
 
 	if !inserted && err == nil {
 		return SharedPage{}, errors.New("this page is already shared")
@@ -175,13 +176,13 @@ func (data *DataStore) AddTagToPage(tag string, pageID int) (string, error) {
 }
 
 //GetContentsOfNotebook ...
-func (data *DataStore) GetContentsOfNotebook(notebookID string) (pageRefs []Page, e error) {
+func (data *DataStore) GetContentsOfNotebook(notebookID, creator string) (pageRefs []Page, e error) {
 	if err := data.checkConnection(); err != nil {
 		return nil, err
 	}
 	var pageRefMap map[string][]Page
 	projection := bson.D{{"pages", 1}, {"_id", 0}}
-	result := data.db.Collection("notebooks", nil).FindOne(context.Background(), bson.M{"id": notebookID}, options.FindOne().SetProjection(projection))
+	result := data.db.Collection("notebooks", nil).FindOne(context.Background(), bson.M{"id": notebookID, "owner": creator}, options.FindOne().SetProjection(projection))
 	if err := common.LogError("GetContentsOfNotebook(decode)", result.Decode(&pageRefMap)); err == nil {
 		return pageRefMap["pages"], nil //, nil
 	} else {
@@ -202,25 +203,26 @@ func (data *DataStore) GetPageTags(pageID string) (tags []PageTag, e error) {
 
 //GetPageByID ...
 func (data *DataStore) GetPageByID(pageID, notebookID string) (page Page, e error) {
-	var p map[string]interface{}
+	var p []map[string][]Page
 	if err := data.checkConnection(); err != nil {
 		return Page{}, err
 	}
 	common.LogDebug("pageID", pageID, "notebookID: "+notebookID)
 	projection := bson.D{{"$project", bson.D{{"pages", 1}, {"_id", 0}}}}
-	matchStage := bson.D{{"$match", bson.D{{"pages.id", pageID}, {"id", notebookID}}}}
+	matchStage := bson.D{{"$match", bson.D{{"pages.id", pageID}}}}
 	unwindStage := bson.D{{"$unwind", "$pages"}}
 	group := bson.D{{"$group", bson.M{"_id": "$id", "pages": bson.D{{"$push", "$pages"}}}}}
 
-	r, e := data.db.Collection("notebooks", nil).Aggregate(context.Background(), mongo.Pipeline{matchStage, unwindStage, matchStage, group, projection})
+	r, e := data.db.Collection("notebooks", nil).Aggregate(context.Background(), mongo.Pipeline{unwindStage, matchStage, group, projection})
 	if e != nil {
 		return Page{}, common.LogError("", e)
 	}
 
-	err := r.Decode(&p)
-	common.LogDebug("error", err, p)
-	return Page{}, nil
+	err := r.All(context.Background(), &p)
+	return p[0]["pages"][0], err
 }
+
+//GetPageTitle ...
 
 //GetPagesWithTags Returns pagerefs of docs matching the 'tag(s)' specified
 func (data *DataStore) GetPagesWithTags(tags []string, notebookID string) (pages []Page, err error) {
@@ -352,6 +354,17 @@ func (data *DataStore) GetSharedPageInfo(accessToken string) (SharedPage, error)
 	}
 }
 
+//GetSharedPages ...
+func (data *DataStore) GetSharedPages(username string) (pages []SharedPage, err error) {
+	projection := bson.D{{"_id", 0}}
+	result, err := data.db.Collection("sharedpages", nil).Find(context.Background(), bson.M{"owner": username}, options.Find().SetProjection(projection))
+	if err != nil {
+		return nil, err
+	}
+	err = result.All(context.Background(), &pages)
+	return pages, err
+}
+
 //IsValidTagID Returns true if the provided tag IDs both exist and were created by the provided username
 func (data *DataStore) IsValidTagID(ids []string, username string) (bool, error) {
 	if err := data.checkConnection(); err != nil {
@@ -441,8 +454,10 @@ func (data *DataStore) DeleteNotebook(id string) ([]Page, error) {
 		return nil, common.LogError("", err)
 	}
 
-	if _, err := data.db.Collection("sharedpages", nil).DeleteMany(context.Background(), bson.M{"notebookid": id}, &options.DeleteOptions{}); err != nil {
-		return []Page{}, err
+	if r, err := data.db.Collection("sharedpages", nil).DeleteMany(context.Background(), bson.M{"notebookid": id}, &options.DeleteOptions{}); err != nil {
+		if r == nil && err != nil {
+			return []Page{}, common.LogError("", err)
+		}
 	}
 
 	dr := data.db.Collection("notebooks", nil).FindOneAndDelete(context.Background(), bson.M{"id": id}, &options.FindOneAndDeleteOptions{})
@@ -450,8 +465,8 @@ func (data *DataStore) DeleteNotebook(id string) ([]Page, error) {
 }
 
 //DeleteSharedPage ...
-func (data *DataStore) DeleteSharedPage(sharedPageID string) (bool, error) {
-	dr := data.db.Collection("sharedpages", nil).FindOneAndDelete(context.Background(), bson.M{"id": sharedPageID}, &options.FindOneAndDeleteOptions{})
+func (data *DataStore) DeleteSharedPage(sharedPageID, username string) (bool, error) {
+	dr := data.db.Collection("sharedpages", nil).FindOneAndDelete(context.Background(), bson.M{"id": sharedPageID, "owner": username}, &options.FindOneAndDeleteOptions{})
 	return dr.Err() == nil, common.LogError("", dr.Err())
 }
 

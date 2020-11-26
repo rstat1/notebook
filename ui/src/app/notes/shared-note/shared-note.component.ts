@@ -10,7 +10,9 @@ import { SharedPageResponse } from 'app/services/api/QueryResponses';
 	styleUrls: ['./shared-note.component.css']
 })
 export class SharedNoteComponent implements OnInit {
-	public pageContent: string;
+	public lastEdit: string;
+	public pageTitle: string = '';
+	public pageContent: string = '';
 	public scrollbarOptions = { scrollInertia: 0, theme: 'dark', scrollbarPosition: "inside", alwaysShowScrollbar: 0, autoHideScrollbar: true };
 
 	constructor(private route: ActivatedRoute, private api: APIService) { }
@@ -19,6 +21,8 @@ export class SharedNoteComponent implements OnInit {
 		this.route.params.subscribe((params) => {
 			this.api.GetSharedPage(params.sharedID).subscribe(resp => {
 				var sharedPage: SharedPageResponse = JSON.parse(resp.response);
+				this.pageTitle = sharedPage.title;
+				this.lastEdit = sharedPage.lastEdit;
 				this.pageContent = sharedPage.content;
 			});
 		});
