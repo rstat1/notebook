@@ -21,7 +21,7 @@ type ServiceAPI struct {
 //NewNBServiceAPI ...
 func NewNBServiceAPI(db *data.DataStore, vault *crypto.VaultKMS) *ServiceAPI {
 	if _, err := os.Stat("notebooks"); os.IsNotExist(err) {
-		err := os.Mkdir("notebooks", 0600)
+		err := os.Mkdir("notebooks", 0700)
 		if err != nil {
 			panic(err)
 		}
@@ -68,7 +68,7 @@ func (notesAPI *ServiceAPI) NewPage(page data.NewPageRequest) error {
 func (notesAPI *ServiceAPI) ReadPage(pageID, notebookID string) (string, error) {
 	var entryKey crypto.Key
 	var entryCryptoKey crypto.PageEncryptionKey
-	if file, err := os.OpenFile("notebooks/"+notebookID+"/"+pageID, os.O_RDONLY, 0600); os.IsNotExist(err) {
+	if file, err := os.OpenFile("notebooks/"+notebookID+"/"+pageID, os.O_RDONLY, 0700); os.IsNotExist(err) {
 		return "", err
 	} else {
 		if contentKey, err := notesAPI.vaultClient.ReadKeyFromKV(notebookID + "/" + pageID); err == nil {
@@ -101,10 +101,36 @@ func (notesAPI *ServiceAPI) DeletePage(pageID, notebookID string) error {
 	}
 }
 
+//EditPageMD ...
+func (notesAPI *ServiceAPI) EditPageMD(pageMD data.NewPageRequest) error {
+	if pageMD.Metadata.ID == "" {
+		return errors.New("missing required id")
+	}
+
+	updated, err := notesAPI.data.UpdatePage(pageMD.NotebookID, pageMD.Metadata)
+	if !updated {
+		return errors.New("couldn't find a page to update")
+	}
+	return err
+}
+
+//EditPageContent ...
+func (notesAPI *ServiceAPI) EditPageContent(content, pageID, notebookID string) error {
+	pageMD, err := notesAPI.GetPageMetadata(pageID, notebookID)
+	if err != nil {
+		return err
+	}
+	if _, err := notesAPI.data.UpdatePage(notebookID, pageMD); err != nil {
+		return err
+	}
+
+	return notesAPI.writePageContentToDisk(content, pageID, notebookID)
+}
+
 //NewNotebook ...
 func (notesAPI *ServiceAPI) NewNotebook(notebook data.Notebook) (data.NotebookReference, error) {
 	if err := notesAPI.data.NewNotebook(notebook); err == nil {
-		return data.NotebookReference{ID: notebook.ID, Name: notebook.Name}, os.Mkdir("notebooks/"+notebook.ID, 0600)
+		return data.NotebookReference{ID: notebook.ID, Name: notebook.Name}, os.Mkdir("notebooks/"+notebook.ID, 0700)
 	} else {
 		return data.NotebookReference{}, err
 	}
@@ -132,34 +158,54 @@ func (notesAPI *ServiceAPI) writePageContentToDisk(content, pageID, notebookID s
 	wd, _ := os.Getwd()
 	path := wd + "/notebooks/" + notebookID + "/" + pageID
 
+	if notebookID == "" {
+		return errors.New("no notebook id specified")
+	}
+
+	if err := notesAPI.renameFileForEdit(path); err != nil {
+		return err
+	}
+
 	if vKey, vSealed, err := notesAPI.vaultClient.GenerateKey(crypto.Context{"pageID": pageID}); err == nil {
 		cryptoKey := crypto.GenerateKey(vKey[:], "notes/"+notebookID+"/"+pageID)
 		sealed, _ := cryptoKey.Seal(vKey[:], notebookID+"/"+pageID)
-		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0600)
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0700)
 		if err != nil {
-			return err
+			notesAPI.revertFileRename(path)
+			return common.LogError("", err)
 		}
 		if encryptedWriter, err := sio.EncryptWriter(file, sio.Config{Key: cryptoKey[:], MinVersion: sio.Version20}); err == nil {
 			encryptedWriter.Write([]byte(content))
 			if err = encryptedWriter.Close(); err != nil {
 				os.Remove(path)
 				file.Close()
-				return err
+				notesAPI.revertFileRename(path)
+				return common.LogError("", err)
 			}
 			entryCryptoKey := crypto.PageEncryptionKey{EntryKey: sealed, SealedMasterKey: vSealed}
 			ecKey, _ := json.Marshal(entryCryptoKey)
 			if e := notesAPI.vaultClient.WriteKeyToKVStorage(string(ecKey), notebookID+"/"+pageID); e != nil {
 				file.Close()
 				os.Remove(path)
-				return e
+				notesAPI.revertFileRename(path)
+				return common.LogError("", e)
 			}
 		} else {
-			return err
+			notesAPI.revertFileRename(path)
+			return common.LogError("", err)
 		}
 		file.Close()
 	} else {
-		return err
+		notesAPI.revertFileRename(path)
+		return common.LogError("", err)
 	}
+
+	if _, err := os.Stat(path + "-backup"); !os.IsNotExist(err) {
+		if err := os.Remove(path + "-backup"); err != nil {
+			return common.LogError("", err)
+		}
+	}
+
 	return nil
 }
 
@@ -168,4 +214,22 @@ func (notesAPI *ServiceAPI) cleanupAfterError(pageID, notebookID string) {
 	path := wd + "/notebooks/" + notebookID + "/" + pageID
 	os.RemoveAll(path)
 	notesAPI.vaultClient.DeleteKeyFromKV(notebookID + "/" + pageID)
+}
+
+func (notesAPI *ServiceAPI) renameFileForEdit(path string) error {
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		if err := os.Rename(path, path+"-backup"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (notesAPI *ServiceAPI) revertFileRename(path string) error {
+	if _, err := os.Stat(path + "-backup"); !os.IsNotExist(err) {
+		if err := os.Rename(path+"-backup", path); err != nil {
+			return err
+		}
+	}
+	return nil
 }

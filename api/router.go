@@ -58,6 +58,7 @@ func (api *Routes) InitAPIRoutes() {
 	api.router.Handle("/api/ash/notebook/:nbid/ripout/:id", common.RequestWrapper(api.user.AnyTokenProvided, "DELETE", api.ripout))
 	api.router.Handle("/api/ash/notebook/:nbid/pagecontent/:id", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.page))
 	api.router.Handle("/api/ash/notebook/:nbid/withtags", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.setfilter))
+	api.router.Handle("/api/ash/notebook/editpage", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.editpage))
 
 	api.router.Handle("/api/ash/tags", common.RequestWrapper(api.user.AnyTokenProvided, "GET", api.gettags))
 	api.router.Handle("/api/ash/tags/new", common.RequestWrapper(api.user.AnyTokenProvided, "POST", api.newtag))
@@ -67,6 +68,7 @@ func (api *Routes) InitAPIRoutes() {
 	api.router.Handle("/api/ash/sharing/unshare/:id", common.RequestWrapper(api.user.NotAnAPIKey, "DELETE", api.unsharepage))
 	api.router.Handle("/api/ash/sharing/:id", common.RequestWrapper(common.Nothing, "GET", api.getsharedpage))
 	api.router.Handle("/api/ash/sharing/allshared", common.RequestWrapper(api.user.NotAnAPIKey, "GET", api.getsharedpages))
+
 }
 
 func (api *Routes) authcode(resp http.ResponseWriter, r *http.Request) {
@@ -231,7 +233,7 @@ func (api *Routes) deletenotebook(resp http.ResponseWriter, r *http.Request) {
 }
 func (api *Routes) newpage(resp http.ResponseWriter, r *http.Request) {
 	var newPage data.NewPageRequest
-	if api.user.HasPermission(r, "notebook:create") {
+	if api.user.HasPermission(r, "notebook:write") {
 		if err := r.ParseMultipartForm(128 * 1024); err == nil {
 			metadata := r.FormValue("metadata")
 			pageContent := r.FormValue("content")
@@ -252,6 +254,7 @@ func (api *Routes) newpage(resp http.ResponseWriter, r *http.Request) {
 		if username, err := api.user.GetUsernameFromToken(r); err == nil {
 			newPage.Metadata.Creator = username
 			newPage.Metadata.ID = uuid.New().String()
+			newPage.Metadata.LastEdited = common.UnixTimestampInMS()
 			common.WriteResponse(resp, 400, newPage.Metadata, api.notebookSvc.NewPage(newPage))
 		} else {
 			common.WriteFailureResponse(err, resp, "newpage", 400)
@@ -263,14 +266,14 @@ func (api *Routes) newpage(resp http.ResponseWriter, r *http.Request) {
 }
 func (api *Routes) pagemetadata(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "notebook:read") {
-		if allowed, err := api.isAccessAllowed(r); allowed {
+		if allowed, err := api.isAccessAllowed(r, vestigo.Param(r, "id")); allowed {
 			page, err := api.notebookSvc.GetPageMetadata(vestigo.Param(r, "id"), vestigo.Param(r, "nbid"))
 			common.WriteResponse(resp, 400, page, err)
 		} else {
 			if err != nil {
-				common.WriteFailureResponse(err, resp, "pagemetada", 500)
+				common.WriteFailureResponse(err, resp, "pagemetadata", 500)
 			} else {
-				common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetada", 401)
+				common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetadata", 401)
 			}
 		}
 	} else {
@@ -286,18 +289,18 @@ func (api *Routes) ripout(resp http.ResponseWriter, r *http.Request) {
 }
 func (api *Routes) page(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "notebook:read") {
-		if allowed, err := api.isAccessAllowed(r); allowed {
+		if allowed, err := api.isAccessAllowed(r, vestigo.Param(r, "id")); allowed {
 			page, err := api.notebookSvc.ReadPage(vestigo.Param(r, "id"), vestigo.Param(r, "nbid"))
 			common.WriteResponse(resp, 400, page, err)
 		} else {
 			if err != nil {
 				common.WriteFailureResponse(err, resp, "page", 500)
 			} else {
-				common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetada", 401)
+				common.WriteFailureResponse(errors.New("not authorized"), resp, "page", 401)
 			}
 		}
 	} else {
-		common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetadata", 401)
+		common.WriteFailureResponse(errors.New("not authorized"), resp, "page", 401)
 	}
 }
 func (api *Routes) setfilter(resp http.ResponseWriter, r *http.Request) {
@@ -313,6 +316,43 @@ func (api *Routes) setfilter(resp http.ResponseWriter, r *http.Request) {
 	} else {
 		common.WriteFailureResponse(errors.New("not authorized"), resp, "pagemetadata", 401)
 	}
+}
+func (api *Routes) editpage(resp http.ResponseWriter, r *http.Request) {
+	if api.user.HasPermission(r, "notebook:write") == false {
+		common.WriteFailureResponse(errors.New("not authorized"), resp, "editpage", 401)
+		return
+	}
+	if err := r.ParseMultipartForm(128 * 1024); err != nil {
+		common.WriteResponse(resp, 400, nil, err)
+		return
+	}
+	meta := r.FormValue("metadata")
+	content := r.FormValue("content")
+	if meta == "" {
+		common.WriteResponse(resp, 400, nil, errors.New("missing page metadata"))
+		return
+	}
+	var pageMD data.NewPageRequest
+	json.Unmarshal([]byte(meta), &pageMD)
+	if allowed, err := api.isAccessAllowed(r, pageMD.Metadata.ID); !allowed {
+		if err != nil {
+			common.WriteFailureResponse(err, resp, "editpage", 500)
+			return
+		} else {
+			common.WriteFailureResponse(errors.New("not authorized"), resp, "editpage", 401)
+			return
+		}
+	}
+	if err := api.notebookSvc.EditPageMD(pageMD); err != nil {
+		common.WriteFailureResponse(err, resp, "editpage", 500)
+		return
+	}
+	if content != "" {
+		common.WriteResponse(resp, 400, nil, api.notebookSvc.EditPageContent(content, pageMD.Metadata.ID, pageMD.NotebookID))
+	} else {
+		common.WriteResponse(resp, 400, "success", nil)
+	}
+
 }
 func (api *Routes) gettags(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "tags") {
@@ -415,9 +455,9 @@ func (api *Routes) getsharedpages(resp http.ResponseWriter, r *http.Request) {
 	}
 	common.WriteResponse(resp, 400, pages, err)
 }
-func (api *Routes) isAccessAllowed(r *http.Request) (bool, error) {
+func (api *Routes) isAccessAllowed(r *http.Request, pageID string) (bool, error) {
 	if username, err := api.user.GetUsernameFromToken(r); err == nil {
-		if creator, err := api.data.GetPageCreator(vestigo.Param(r, "id")); err == nil {
+		if creator, err := api.data.GetPageCreator(pageID); err == nil {
 			if creator == username {
 				return true, nil
 			} else {

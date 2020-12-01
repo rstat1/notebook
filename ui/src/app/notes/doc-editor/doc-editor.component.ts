@@ -2,15 +2,15 @@
 import * as MediumEditor from 'medium-editor';
 
 import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
 import { FormControl } from '@angular/forms';
+import { map, startWith } from 'rxjs/operators';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatAutocompleteSelectedEvent, MatChipInputEvent, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
-import { Component, ElementRef, ViewChild, ComponentFactoryResolver, Injector, ComponentRef, Type, AfterViewInit, Inject, OnInit } from '@angular/core';
+import { Component, ElementRef, ViewChild, ComponentFactoryResolver, Injector, Type, AfterViewInit, Inject, OnInit } from '@angular/core';
 
 import { APIService } from 'app/services/api/api.service';
 import { DataCacheService } from 'app/services/data-cache.service';
-import { NewPageMetadata, NewPageRequest, NewPageResponse, PageTag } from 'app/services/api/QueryResponses';
+import { NewPageMetadata, NewPageRequest, NewPageResponse, Page, PageTag } from 'app/services/api/QueryResponses';
 
 import { MDBoldButton, MDCodeButton, MDItalicButton, MDStrikeButton } from 'app/notes/doc-editor/markdown-buttons'
 
@@ -25,16 +25,23 @@ export class DocEditorComponent implements AfterViewInit, OnInit {
 	public text: string = "";
 	public title: string = "";
 	public saveSuccess: boolean;
+	public activePageID: string;
 	public activeNotebookID: string;
 	public currentDate = new Date();
+	public editMode: boolean = false;
 	public removable: boolean = true;
 	public selectable: boolean = true;
 	public tags: PageTag[] = new Array();
 	public tagsAsStr: string[] = new Array();
 	public filteredTags: Observable<string[]>;
 	public selectedTags: PageTag[] = new Array();
+	public docTagsMap: Map<string, string> = new Map();
 	public separatorKeysCodes: number[] = [ENTER, COMMA];
 	public tagFormControl: FormControl = new FormControl();
+
+	public originalTitle: string = "";
+	public originalContent: string = "";
+	public originalTags: PageTag[] = Array();
 
 	public mdEditor: MediumEditor.MediumEditor;
 	@ViewChild('tagInput', { static: true }) public tagInput: ElementRef;
@@ -56,10 +63,10 @@ export class DocEditorComponent implements AfterViewInit, OnInit {
 				this.tagsAsStr.push(tag.tagValue);
 			})
 			this.tags = resp;
-			console.log(this.tagsAsStr)
 		})
 	}
 	ngAfterViewInit(): void {
+		this.editMode = <boolean>this.data.edit;
 		this.activeNotebookID = <string>this.data.activeNotebook;
 		this.mdEditor = new MediumEditor(this.editor.nativeElement, {
 			toolbar: {
@@ -81,7 +88,23 @@ export class DocEditorComponent implements AfterViewInit, OnInit {
 				'MDItalic': new MDItalicButton(),
 			}
 		});
+		if (this.editMode) {
+			this.editor.nativeElement.innerText = this.originalContent = <string>this.data.pageContent;
+			this.activePageID = <string>this.data.activePage;
 
+			this.docTagsMap = this.cache.getTagMap()
+			this.cache.getPages(this.activeNotebookID, false).subscribe(resp => {
+				resp.forEach((page) => {
+					if (page.id == this.activePageID) {
+						this.titleElement.nativeElement.innerText = this.originalTitle = page.title;
+						page.tags.forEach((tag) => {
+							this.addTag(this.docTagsMap.get(<string>(<unknown>tag)));
+						})
+						this.originalTags = this.selectedTags;
+					}
+				})
+			});
+		}
 	}
 	add(event: MatChipInputEvent) {
 		const input = event.input;
@@ -107,17 +130,16 @@ export class DocEditorComponent implements AfterViewInit, OnInit {
 		this.addTag(event.option.viewValue);
 		this.tagInput.nativeElement.value = "";
 	}
-	titleInput() {/*  */
+	titleInput() {
 		this.title = this.titleElement.nativeElement.innerText;
 	}
 	keyDown(event: KeyboardEvent) {
-
 		return true;
 	}
 	addTag(tagValue: string) {
 		tagValue = tagValue.replace('"', "")
 		var tag: PageTag = this.tags.find(tag => tag.tagValue == tagValue)
-		if (!this.selectedTags.includes(tag)) {
+		if (!this.selectedTags.includes(tag) && (this.selectedTags.length + 1) < 4) {
 			this.selectedTags.push(tag);
 		}
 	}
@@ -139,6 +161,13 @@ export class DocEditorComponent implements AfterViewInit, OnInit {
 		this.dialogRef.close(new NewPageResponse("closed", null, "closed"));
 	}
 	public save() {
+		if (this.editMode == false) {
+			this.saveNewPage();
+		} else {
+			this.saveEditedPage();
+		}
+	}
+	private saveNewPage() {
 		let newPage: NewPageRequest;
 		let newPageForm: FormData = new FormData();
 		let pageMD: NewPageMetadata = new NewPageMetadata();
@@ -148,7 +177,6 @@ export class DocEditorComponent implements AfterViewInit, OnInit {
 		this.selectedTags.forEach((value: PageTag) => {
 			pageMD.tags.push(value.tagId);
 		});
-		pageMD.lastEdited = Date.now();
 
 		newPage = new NewPageRequest(pageMD, this.activeNotebookID);
 
@@ -163,6 +191,43 @@ export class DocEditorComponent implements AfterViewInit, OnInit {
 		}, error => {
 			this.dialogRef.close(new NewPageResponse("failed", null, error.error.response));
 		})
+	}
+	private saveEditedPage() {
+		let newPage: NewPageRequest;
+		let newPageForm: FormData = new FormData();
+		let pageMD: NewPageMetadata = new NewPageMetadata();
+		let noteContent: string = this.getText(this.editor.nativeElement);
+		pageMD.id = this.activePageID;
+		pageMD.tags = new Array<string>();
+		pageMD.title = this.titleElement.nativeElement.innerText;
+		this.selectedTags.forEach((value: PageTag) => {
+			pageMD.tags.push(value.tagId);
+		});
+
+		newPage = new NewPageRequest(pageMD, this.activeNotebookID);
+		newPageForm.append("metadata", JSON.stringify(newPage))
+
+		if (noteContent != this.originalContent) {
+			newPageForm.append("content", noteContent);
+		}
+
+		if (this.originalTitle != this.title || this.originalTags != this.selectedTags) {
+			this.api.EditPage(newPageForm).subscribe(resp => {
+				if (resp.status == "success") {
+					this.saveSuccess = true;
+					if (noteContent != this.originalContent) {
+						this.dialogRef.close("md|content");
+					} else {
+						this.dialogRef.close("md");
+					}
+				}
+			}, error => {
+				this.dialogRef.close(new NewPageResponse("failed", null, error.error.response));
+			})
+		} else {
+			this.saveSuccess = true;
+			this.dialogRef.close(new NewPageResponse("Nothing changed", null));
+		}
 	}
 	private getStyle(n: any, p: any): any {
 		return n.currentStyle ?

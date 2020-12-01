@@ -5,6 +5,9 @@
   margin: 0;
   /* padding: 0; */
 }
+a {
+	color: #98959A;
+}
 html, body {
 	font-family: 'Roboto';
   height: 100vh;

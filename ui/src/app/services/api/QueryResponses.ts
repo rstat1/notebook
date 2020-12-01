@@ -10,7 +10,7 @@ export class DeleteToken {
 	public tokens: APIToken[];
 }
 export class Page {
-	public id: number;
+	public id: string;
 	public title: string;
 	public tags: PageTag[];
 	public creator: string;
@@ -30,6 +30,7 @@ export class NotebookReference {
 	public name: string;
 }
 export class NewPageMetadata {
+	public id: string
 	public tags: string[];
 	public title: string;
 	public lastEdited: number;

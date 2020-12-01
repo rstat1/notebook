@@ -63,6 +63,8 @@ func (data *DataStore) NewPage(page Page, notebookID string) error {
 		}
 	}
 
+	page.LastEdited = time.Now().Unix()
+
 	r, err := data.db.Collection("notebooks", nil).UpdateOne(context.Background(), bson.M{"id": notebookID}, bson.M{"$addToSet": bson.M{"pages": page}}, &options.UpdateOptions{})
 	if r != nil {
 		if r.ModifiedCount == 0 && err == nil {
@@ -471,25 +473,12 @@ func (data *DataStore) DeleteSharedPage(sharedPageID, username string) (bool, er
 }
 
 //UpdatePage ...
-func (data *DataStore) UpdatePage(pageID string, key string, value interface{}) (string, error) {
-	if err := data.checkConnection(); err != nil {
-		return "", err
-	}
+func (data *DataStore) UpdatePage(notebookID string, value Page) (bool, error) {
+	value.LastEdited = common.UnixTimestampInMS()
 
-	if key == "tags" {
-		//TODO: Validate tags
-	}
-
-	r, err := data.db.Collection("pages", nil).UpdateOne(context.Background(), bson.M{"id": pageID}, bson.M{"$set": bson.M{key: value}}, &options.UpdateOptions{})
-	if r.ModifiedCount == 0 && err == nil {
-		return "not modified", nil
-	} else if r.MatchedCount == 0 && err == nil {
-		return "not found", nil
-	} else if err != nil {
-		return "error", err
-	} else {
-		return "success", nil
-	}
+	dr := data.db.Collection("notebooks", nil).FindOneAndUpdate(context.Background(), bson.M{"id": notebookID, "pages.id": value.ID},
+		bson.M{"$set": bson.M{"pages.$": value}}, &options.FindOneAndUpdateOptions{})
+	return dr.Err() == nil, common.LogError("", dr.Err())
 }
 
 func (data *DataStore) insertUniqueItem(collectionName string, doc interface{}, criteriaForCheck bson.M) (bool, error) {

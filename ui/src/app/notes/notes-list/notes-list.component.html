@@ -63,6 +63,8 @@
 					 style="width: 373px;">
 					<div (click)="this.noteClicked(note.id)" class="list-element" [class.selected-note]="this.isActiveNote(note.id)"
 						 *ngFor="let note of notes">
+						<div class="icon-column">
+						</div>
 						<div style="flex: 2;">
 							<span style="display: flex;">{{note.title}} </span>
 							<mat-chip-list class="chip-list chip-list-list-item">
@@ -95,7 +97,11 @@
 				</div>
 			</div>
 		</div>
-		<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" style="background-color:#252525;flex: 1;" *ngIf="this.pageContent != ''">
+		<div malihu-scrollbar [scrollbarOptions]="scrollbarOptions" class="note-content" *ngIf="this.pageContent != ''">
+			<button style="margin-right: 14px;" class="action-button page-edit-button" matTooltipPosition="below"
+					matTooltip="Edit Page" mat-icon-button (click)="editDocument()">
+				<mat-icon style="margin-left: 4px;" class="action-button-icon">edit</mat-icon>
+			</button>
 			<div style="margin: 20px;">
 				<markdown class="editor-element task-description" [data]="this.pageContent"></markdown>
 			</div>

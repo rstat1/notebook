@@ -378,3 +378,8 @@ func ConvertInterfaceArrToIntArr(from []interface{}) (to []int) {
 	}
 	return to
 }
+
+//UnixTimestampInMS Returns a unix timestamp for the current time and date in milliseconds
+func UnixTimestampInMS() int64 {
+	return time.Now().UnixNano() / 1000000
+}

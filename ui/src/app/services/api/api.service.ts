@@ -77,6 +77,9 @@ export class APIService {
 	public NewSharedPage(pageID: string, notebookID: string, title: string): Observable<APIResponse> {
 		return this.http.post<APIResponse>(ConfigService.GetAPIURLFor("sharing/share"), JSON.stringify({ "page": pageID, "notebook": notebookID, "title": title }));
 	}
+	public EditPage(editedPage: FormData): Observable<APIResponse> {
+		return this.postFormRequest(ConfigService.GetAPIURLFor("notebook/editpage"), editedPage)
+	}
 	public DeleteAPIToken(tokenID: string, creator: string): Observable<APIResponse> {
 		return this.deleteRequest<DeleteAPITokenRequest>(new DeleteAPITokenRequest(tokenID, creator), "user/apikey");
 	}

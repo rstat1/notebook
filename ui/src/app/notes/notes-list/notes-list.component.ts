@@ -116,7 +116,7 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 	public newDocument() {
 		var newPage = this.dialog.open(DocEditorComponent, {
 			width: '1050px', disableClose: true, autoFocus: true,
-			data: { activeNotebook: this.activeNotebookID }
+			data: { activeNotebook: this.activeNotebookID, edit: false }
 		});
 
 		newPage.afterClosed().subscribe(result => {
@@ -127,6 +127,22 @@ export class NotesListComponent implements OnInit, OnDestroy, AfterViewInit {
 				this.cache.currentPageList.push(res.page);
 			} else if (res.error != "closed") {
 				this.showMessage("Failed: " + res.error)
+			}
+		})
+	}
+	public editDocument() {
+		var editPage = this.dialog.open(DocEditorComponent, {
+			width: '1050px', disableClose: true, autoFocus: true,
+			data: { activeNotebook: this.activeNotebookID, activePage: this.activePageID, edit: true, pageContent: this.pageContent }
+		});
+		editPage.afterClosed().subscribe(result => {
+			this.cache.getPages(this.activeNotebookID, true).subscribe(resp => { this.notes = resp; });
+			if (result == "md|content") {
+				this.api.GetPageContent(this.activePageID, this.activeNotebookID).subscribe(resp => {
+					if (resp.status == "success") {
+						this.pageContent = JSON.parse(resp.response);
+					}
+				})
 			}
 		})
 	}
