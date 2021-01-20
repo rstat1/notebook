@@ -87,11 +87,8 @@ func (kms *VaultKMS) GenerateKey(ctx Context) (key [32]byte, sealed []byte, e er
 func (kms *VaultKMS) GetDBCredentials() (string, string, error) {
 	common.LogDebug("", "", "GetDBCredentials")
 	if creds, err := kms.client.Logical().Read(kms.vaultDBCredsEndpoint); err == nil {
-		credRenewer, err := kms.client.NewRenewer(&vault.RenewerInput{Secret: creds})
-		if err != nil {
-			return "", "", err
-		}
-		kms.dbCredsRenewer(credRenewer)
+		// kms.renewDBCreds(creds.LeaseID, time.Duration(creds.LeaseDuration-20)*time.Second)
+		// kms.dbCredsRenewer(credRenewer)
 		return creds.Data["username"].(string), creds.Data["password"].(string), nil
 	} else {
 		return "", "", err
@@ -183,29 +180,13 @@ func (kms *VaultKMS) UnsealKey(sealedKey []byte, ctx Context) (key [32]byte, e e
 
 //RenewToken Renews a token
 func (kms *VaultKMS) RenewToken() *vault.Secret {
-	if s, e := kms.client.Auth().Token().RenewTokenAsSelf(kms.client.Token(), 120); e == nil {
+	if s, e := kms.client.Auth().Token().RenewTokenAsSelf(kms.client.Token(), 600); e == nil {
 		kms.client.SetToken(s.Auth.ClientToken)
 		return s
 	}
 	return nil
 }
 
-func (kms *VaultKMS) dbCredsRenewer(renewer *vault.Renewer) {
-	go func() {
-		renewer.Renew()
-		defer renewer.Stop()
-		for {
-			select {
-			case err := <-renewer.DoneCh():
-				if err != nil {
-					common.LogError("dbCredsRenewer", err)
-				}
-			case renewal := <-renewer.RenewCh():
-				common.LogInfo("timestamp", renewal.RenewedAt, "renewal successful")
-			}
-		}
-	}()
-}
 func (kms *VaultKMS) tokenRenewalTimer() {
 	go func() {
 		for {
@@ -246,6 +227,17 @@ func (kms *VaultKMS) getTokenLeaseTime() time.Duration {
 			kms.stopRefresh = true
 			return time.Duration(0 * time.Second)
 		}
+	}
+	return tokenDuration
+}
+
+func (kms *VaultKMS) getLeaseTime(secretDuration int) time.Duration {
+	var tokenDuration time.Duration
+	if secretDuration > 0 {
+		tokenDuration = time.Duration(secretDuration-20) * time.Second
+	} else {
+		common.LogWarn("", "", "this token has no lease duration for some reason. Defaulting to 600 seconds")
+		tokenDuration = time.Duration(600) * time.Second
 	}
 	return tokenDuration
 }
