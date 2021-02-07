@@ -343,16 +343,22 @@ func (api *Routes) editpage(resp http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := api.notebookSvc.EditPageMD(pageMD); err != nil {
-		common.WriteFailureResponse(err, resp, "editpage", 500)
+
+	if username, err := api.user.GetUsernameFromToken(r); err == nil {
+		pageMD.Metadata.Creator = username
+		if err := api.notebookSvc.EditPageMD(pageMD); err != nil {
+			common.WriteFailureResponse(err, resp, "editpage", 500)
+			return
+		}
+		if content != "" {
+			common.WriteResponse(resp, 400, nil, api.notebookSvc.EditPageContent(content, pageMD.Metadata.ID, pageMD.NotebookID))
+		} else {
+			common.WriteResponse(resp, 400, "success", nil)
+		}
+	} else {
+		common.WriteFailureResponse(errors.New("not authorized"), resp, "editpage", 401)
 		return
 	}
-	if content != "" {
-		common.WriteResponse(resp, 400, nil, api.notebookSvc.EditPageContent(content, pageMD.Metadata.ID, pageMD.NotebookID))
-	} else {
-		common.WriteResponse(resp, 400, "success", nil)
-	}
-
 }
 func (api *Routes) gettags(resp http.ResponseWriter, r *http.Request) {
 	if api.user.HasPermission(r, "tags") {

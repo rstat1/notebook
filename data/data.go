@@ -327,7 +327,7 @@ func (data *DataStore) GetAPIKeys(username string) (keys []UserAPIKey, err error
 	}
 
 	err = data.retryableQuery(func() error {
-		if result, err := data.db.Collection("apikeys", nil).Find(context.Background(), bson.M{}, &options.FindOptions{}); err == nil {
+		if result, err := data.db.Collection("apikeys", nil).Find(context.Background(), bson.M{"creator": username}, &options.FindOptions{}); err == nil {
 			for result.Next(context.Background()) {
 				if err = common.LogError("GetAPIKey(decode)", result.Decode(&apiKey)); err != nil {
 					return err
@@ -674,6 +674,7 @@ func (data *DataStore) insertItem(collectionName string, item interface{}) (bool
 			result = false
 			return err
 		}
+		result = true
 		return nil
 	})
 	return result, err
